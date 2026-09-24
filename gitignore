@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+.env
+.env.local
+*.env
+
+# Build output
+dist/
+build/
+.expo/
+.next/
+
+# Mobile
+*.apk
+*.ipa
+ios/Pods/
+android/app/build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Database
+*.sqlite
+*.sqlite3
