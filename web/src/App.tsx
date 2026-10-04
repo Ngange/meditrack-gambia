@@ -1,0 +1,38 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider, useAuth } from './lib/auth-context';
+import { LoginPage } from './pages/Login';
+import { RegisterPage } from './pages/Register';
+
+function Dashboard() {
+  const { user, signOut } = useAuth();
+  return (
+    <div style={{ padding: 24 }}>
+      <p>Logged in as {user?.userId} ({user?.role})</p>
+      <button onClick={signOut}>Sign out</button>
+    </div>
+  );
+}
+
+function AppRoutes() {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return null;
+
+  return (
+    <Routes>
+      <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route path="/register" element={user ? <Navigate to="/" replace /> : <RegisterPage />} />
+      <Route path="/" element={user ? <Dashboard /> : <Navigate to="/login" replace />} />
+    </Routes>
+    
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}

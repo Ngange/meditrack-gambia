@@ -1,0 +1,12 @@
+.field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.field-label { font-size: 13px; font-weight: 600; color: var(--color-text); }
+.field-box {
+  display: flex; align-items: center; gap: 8px; height: 48px;
+  border-radius: var(--radius-control); border: 1px solid var(--color-input-border);
+  background: var(--color-surface); padding: 0 12px;
+}
+.field-box:focus-within { border-width: 2px; border-color: var(--color-primary); padding: 0 11px; }
+.field-error { border-color: var(--color-error); border-width: 2px; padding: 0 11px; }
+.field-input { flex: 1; border: none; outline: none; font-size: 16px; background: transparent; color: var(--color-text); }
+.field-toggle { background: none; border: none; color: var(--color-primary); font-size: 13px; font-weight: 600; cursor: pointer; }
+.field-error-text { margin: 0; font-size: 13px; color: var(--color-error); }
