@@ -1,12 +1,14 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { jwtDecode } from 'jwt-decode';
-import { login as apiLogin, register as apiRegister, type LoginResponse } from "@/lib/api";
+import { jwtDecode } from "jwt-decode";
+
+import { login as apiLogin, register as apiRegister, getProfile, type LoginResponse, type Profile } from "@/lib/api";
 import { clearToken, getToken, saveToken } from "@/lib/auth-storage";
 
 type User = LoginResponse["user"];
 
 type AuthContextValue = {
   user: User | null;
+  profile: Profile | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
@@ -17,27 +19,55 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-    getToken().then((token) => {
-      if (token) {
-        try {
-          const decoded = jwtDecode<{ userId: string; role: 'patient' | 'admin'; exp: number }>(token);
-
-          if (decoded.exp * 1000 < Date.now()) {
-            clearToken();
-          } else {
-            // Payload doesn't include email — fine for now, since nothing
-            // reads user.email before a fresh login happens. Revisit if that changes.
-            setUser({ userId: decoded.userId, role: decoded.role, email: '' });
-          }
-        } catch {
-          clearToken();
-        }
+  useEffect(() => {
+    async function restoreSession() {
+      const token = await getToken();
+      if (!token) {
+        setIsLoading(false);
+        return;
       }
-      setIsLoading(false);
-    });
+
+      let decoded: { userId: string; role: "patient" | "admin"; exp: number };
+      try {
+        decoded = jwtDecode(token);
+      } catch {
+        // Malformed token — can't even be read. Genuinely invalid.
+        await clearToken();
+        setIsLoading(false);
+        return;
+      }
+
+      if (decoded.exp * 1000 < Date.now()) {
+        await clearToken();
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Decoding only proves the token is well-formed and unexpired.
+        // This call is what actually proves it to the server — a tampered
+        // or revoked token fails here even if it passed the checks above.
+        const { profile } = await getProfile(token);
+        setUser({ userId: decoded.userId, role: decoded.role, email: "" });
+        setProfile(profile);
+      } catch (err) {
+        if ((err as any).isNetworkError) {
+          // Offline, not invalid — trust the locally-decoded token rather
+          // than logging the user out just because we can't reach the server.
+          setUser({ userId: decoded.userId, role: decoded.role, email: "" });
+        } else {
+          // The server actively rejected this token — it's genuinely invalid.
+          await clearToken();
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    restoreSession();
   }, []);
 
   async function signIn(email: string, password: string) {
@@ -55,10 +85,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signOut() {
     await clearToken();
     setUser(null);
+    setProfile(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, profile, isLoading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

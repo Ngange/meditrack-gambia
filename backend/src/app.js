@@ -22,7 +22,7 @@ app.get('/health', async (req, res) => {
 
 // Route modules are mounted here as they're built:
 app.use('/auth', require('./routes/auth'));
-// app.use("/patients", require("./routes/patients"));
+app.use('/patients', require('./routes/patients'));
 // app.use("/records", require("./routes/records"));
 // app.use("/shares", require("./routes/shares"));
 // app.use("/timeline", require("./routes/timeline"));
