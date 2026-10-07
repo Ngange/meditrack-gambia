@@ -76,3 +76,55 @@ export function getProfile(token: string) {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+
+export type Severity = "mild" | "moderate" | "severe";
+export type AllergyStatus = "active" | "resolved";
+
+export type Allergy = {
+  allergy_id: string;
+  allergen: string;
+  reaction: string | null;
+  severity: Severity | null;
+  status: AllergyStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AllergyInput = {
+  allergen: string;
+  reaction?: string;
+  severity?: Severity | null;
+  status?: AllergyStatus;
+};
+
+const auth = (token: string) => ({ Authorization: `Bearer ${token}` });
+
+export function getAllergies(token: string) {
+  return request<{ allergies: Allergy[] }>("/records/allergies", {
+    method: "GET",
+    headers: auth(token),
+  });
+}
+
+export function createAllergy(token: string, input: AllergyInput) {
+  return request<{ allergy: Allergy }>("/records/allergies", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateAllergy(token: string, id: string, input: AllergyInput) {
+  return request<{ allergy: Allergy }>(`/records/allergies/${id}`, {
+    method: "PUT",
+    headers: auth(token),
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteAllergy(token: string, id: string) {
+  return request<{ deleted: boolean }>(`/records/allergies/${id}`, {
+    method: "DELETE",
+    headers: auth(token),
+  });
+}

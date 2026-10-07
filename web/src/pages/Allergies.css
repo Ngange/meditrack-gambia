@@ -1,0 +1,53 @@
+/* Self-contained styles for the allergies page. Colours use the MediTrack palette. */
+.allergies-page {
+  --a-bg: #f7f9fc;
+  --a-surface: #ffffff;
+  --a-text: #1a2433;
+  --a-muted: #5b6b82;
+  --a-border: #d5dde9;
+  --a-primary: #1565c0;
+  --a-on-primary: #ffffff;
+  --a-error: #c62828;
+  min-height: 100%;
+  background: var(--a-bg);
+  color: var(--a-text);
+  padding: 24px 16px;
+}
+@media (prefers-color-scheme: dark) {
+  .allergies-page {
+    --a-bg: #0b1220;
+    --a-surface: #151e2e;
+    --a-text: #e8edf5;
+    --a-muted: #9aa8bd;
+    --a-border: #2b384d;
+    --a-primary: #64b5f6;
+    --a-on-primary: #0b1220;
+    --a-error: #f28b82;
+  }
+}
+.allergies-inner { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+.allergies-back { color: var(--a-primary); text-decoration: none; font-weight: 600; }
+.allergies-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.allergies-head h1 { margin: 0; font-size: 1.75rem; }
+.a-card { background: var(--a-surface); border: 1px solid var(--a-border); border-radius: 12px; padding: 16px; }
+.a-form { display: flex; flex-direction: column; gap: 14px; }
+.a-form h2 { margin: 0; font-size: 1.2rem; }
+.a-field { display: flex; flex-direction: column; gap: 6px; flex: 1; font-size: 0.9rem; font-weight: 600; }
+.a-field input, .a-field select {
+  font: inherit; font-weight: 400; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--a-border); background: var(--a-bg); color: var(--a-text);
+}
+.a-field input:focus, .a-field select:focus { outline: 2px solid var(--a-primary); outline-offset: 1px; }
+.a-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.a-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.a-btn {
+  font: inherit; font-weight: 600; padding: 9px 16px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--a-border); background: var(--a-surface); color: var(--a-text);
+}
+.a-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.a-btn-primary { background: var(--a-primary); border-color: var(--a-primary); color: var(--a-on-primary); }
+.a-btn-danger { color: var(--a-error); border-color: var(--a-error); }
+.a-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.a-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.a-muted { color: var(--a-muted); }
+.a-error { color: var(--a-error); margin: 0; }
