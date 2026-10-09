@@ -58,6 +58,7 @@ export default function HomeScreen() {
         </ThemedView>
 
                 <Button title="My allergies" onPress={() => router.push('/allergies')} />
+                <Button title="Health records" onPress={() => router.push('/records')} />
 
         {Platform.OS === 'web' && <WebBadge />}
       </SafeAreaView>

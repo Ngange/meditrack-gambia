@@ -128,3 +128,53 @@ export function deleteAllergy(token: string, id: string) {
     headers: auth(token),
   });
 }
+
+
+export type ConditionStatus = "active" | "resolved" | "chronic";
+
+export type Condition = {
+  condition_id: string;
+  condition_name: string;
+  diagnosis_date: string | null; // "YYYY-MM-DD"
+  status: ConditionStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ConditionInput = {
+  conditionName: string;
+  diagnosisDate?: string;
+  status?: ConditionStatus;
+  notes?: string;
+};
+
+export function getConditions(token: string) {
+  return request<{ conditions: Condition[] }>("/records/conditions", {
+    method: "GET",
+    headers: auth(token),
+  });
+}
+
+export function createCondition(token: string, input: ConditionInput) {
+  return request<{ condition: Condition }>("/records/conditions", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateCondition(token: string, id: string, input: ConditionInput) {
+  return request<{ condition: Condition }>(`/records/conditions/${id}`, {
+    method: "PUT",
+    headers: auth(token),
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteCondition(token: string, id: string) {
+  return request<{ deleted: boolean }>(`/records/conditions/${id}`, {
+    method: "DELETE",
+    headers: auth(token),
+  });
+}
