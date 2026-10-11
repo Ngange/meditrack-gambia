@@ -447,4 +447,27 @@ router.delete('/conditions/:id', async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------
+// Dashboard summary: one query for every record count.
+// Add a line here whenever a new record type is built.
+// ---------------------------------------------------------------
+router.get('/summary', async (req, res) => {
+  try {
+    const patientId = await getPatientId(req.user.userId);
+    if (!patientId)
+      return res.status(404).json({ error: 'Patient profile not found.' });
+
+    const result = await pool.query(
+      `SELECT
+         (SELECT count(*)::int FROM allergies WHERE patient_id = $1) AS allergies,
+         (SELECT count(*)::int FROM medical_conditions WHERE patient_id = $1) AS conditions`,
+      [patientId],
+    );
+    res.json({ summary: result.rows[0] });
+  } catch (err) {
+    console.error('Summary error:', err);
+    res.status(500).json({ error: 'Could not load summary.' });
+  }
+});
+
 module.exports = router;

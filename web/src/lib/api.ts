@@ -143,3 +143,53 @@ export function deleteCondition(token: string, id: string) {
     headers: auth(token),
   });
 }
+
+
+export type Summary = {
+  allergies: number;
+  conditions: number;
+};
+
+export function getSummary(token: string) {
+  return request<{ summary: Summary }>("/records/summary", {
+    method: "GET",
+    headers: auth(token),
+  });
+}
+
+export type MyProfile = {
+  patient_id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  date_of_birth: string | null;
+  gender: string | null;
+  blood_group: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+};
+
+export type ProfileInput = {
+  firstName: string;
+  lastName: string;
+  dateOfBirth?: string;
+  gender?: string;
+  bloodGroup?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+};
+
+export function getMyProfile(token: string) {
+  return request<{ profile: MyProfile }>("/patients/me", {
+    method: "GET",
+    headers: auth(token),
+  });
+}
+
+export function updateMyProfile(token: string, input: ProfileInput) {
+  return request<{ profile: MyProfile }>("/patients/me", {
+    method: "PUT",
+    headers: auth(token),
+    body: JSON.stringify(input),
+  });
+}

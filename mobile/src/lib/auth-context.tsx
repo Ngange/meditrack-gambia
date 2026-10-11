@@ -54,14 +54,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser({ userId: decoded.userId, role: decoded.role, email: "" });
         setProfile(profile);
       } catch (err) {
-        if ((err as any).isNetworkError) {
-          // Offline, not invalid — trust the locally-decoded token rather
-          // than logging the user out just because we can't reach the server.
-          setUser({ userId: decoded.userId, role: decoded.role, email: "" });
-        } else {
-          // The server actively rejected this token — it's genuinely invalid.
-          await clearToken();
-        }
+          const status = (err as any).status;
+          if (status === 401 || status === 403) {
+            // The server actively rejected this token — it's genuinely invalid.
+            await clearToken();
+          } else {
+            // Offline, a server hiccup, or a missing profile is not proof the
+            // token is bad — keep the patient signed in.
+            setUser({ userId: decoded.userId, role: decoded.role, email: "" });
+          }
       } finally {
         setIsLoading(false);
       }

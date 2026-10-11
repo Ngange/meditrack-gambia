@@ -178,3 +178,34 @@ export function deleteCondition(token: string, id: string) {
     headers: auth(token),
   });
 }
+
+
+export type Summary = {
+  allergies: number;
+  conditions: number;
+};
+
+export function getSummary(token: string) {
+  return request<{ summary: Summary }>("/records/summary", {
+    method: "GET",
+    headers: auth(token),
+  });
+}
+
+export type ProfileInput = {
+  firstName: string;
+  lastName: string;
+  dateOfBirth?: string;
+  gender?: string;
+  bloodGroup?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+};
+
+export function updateProfile(token: string, input: ProfileInput) {
+  return request<{ profile: Profile }>("/patients/me", {
+    method: "PUT",
+    headers: auth(token),
+    body: JSON.stringify(input),
+  });
+}

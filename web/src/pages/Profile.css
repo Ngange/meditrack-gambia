@@ -1,0 +1,12 @@
+.profile-card { max-width: 900px; }
+.profile-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding-bottom: 14px; margin-bottom: 20px; border-bottom: 2px solid var(--a-text);
+}
+.profile-head h2 { margin: 0; font-size: 1.4rem; }
+.profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px 40px; }
+.profile-item dt { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--a-muted); }
+.profile-item dd { margin: 4px 0 0; font-weight: 600; }
+.profile-item dd.is-empty { color: var(--a-muted); font-weight: 400; }
+.profile-blood { color: var(--a-error); font-weight: 700; }
+.profile-item.is-wide { grid-column: 1 / -1; }

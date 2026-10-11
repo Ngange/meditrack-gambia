@@ -1,53 +1,60 @@
-/* Self-contained styles for the allergies page. Colours use the MediTrack palette. */
-.allergies-page {
-  --a-bg: #f7f9fc;
-  --a-surface: #ffffff;
-  --a-text: #1a2433;
-  --a-muted: #5b6b82;
-  --a-border: #d5dde9;
-  --a-primary: #1565c0;
-  --a-on-primary: #ffffff;
-  --a-error: #c62828;
-  min-height: 100%;
-  background: var(--a-bg);
-  color: var(--a-text);
-  padding: 24px 16px;
+/* Shared page styles for every page inside the shell (the colour tokens live in AppShell.css). */
+.allergies-page { color: var(--a-text); }
+.allergies-inner { display: flex; flex-direction: column; gap: 20px; }
+
+.allergies-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.allergies-head h1 { margin: 0; font-size: 1.6rem; letter-spacing: -0.01em; }
+.page-sub { margin: 4px 0 0; color: var(--a-muted); }
+
+.a-card {
+  background: var(--a-surface); border: 1px solid var(--a-border); border-radius: 16px;
+  padding: 22px; box-shadow: var(--a-shadow);
 }
-@media (prefers-color-scheme: dark) {
-  .allergies-page {
-    --a-bg: #0b1220;
-    --a-surface: #151e2e;
-    --a-text: #e8edf5;
-    --a-muted: #9aa8bd;
-    --a-border: #2b384d;
-    --a-primary: #64b5f6;
-    --a-on-primary: #0b1220;
-    --a-error: #f28b82;
-  }
-}
-.allergies-inner { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
-.allergies-back { color: var(--a-primary); text-decoration: none; font-weight: 600; }
-.allergies-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.allergies-head h1 { margin: 0; font-size: 1.75rem; }
-.a-card { background: var(--a-surface); border: 1px solid var(--a-border); border-radius: 12px; padding: 16px; }
-.a-form { display: flex; flex-direction: column; gap: 14px; }
-.a-form h2 { margin: 0; font-size: 1.2rem; }
-.a-field { display: flex; flex-direction: column; gap: 6px; flex: 1; font-size: 0.9rem; font-weight: 600; }
-.a-field input, .a-field select {
-  font: inherit; font-weight: 400; padding: 10px 12px; border-radius: 8px;
-  border: 1px solid var(--a-border); background: var(--a-bg); color: var(--a-text);
-}
-.a-field input:focus, .a-field select:focus { outline: 2px solid var(--a-primary); outline-offset: 1px; }
-.a-row { display: flex; gap: 12px; flex-wrap: wrap; }
-.a-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.a-btn {
-  font: inherit; font-weight: 600; padding: 9px 16px; border-radius: 8px; cursor: pointer;
-  border: 1px solid var(--a-border); background: var(--a-surface); color: var(--a-text);
-}
-.a-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.a-btn-primary { background: var(--a-primary); border-color: var(--a-primary); color: var(--a-on-primary); }
-.a-btn-danger { color: var(--a-error); border-color: var(--a-error); }
-.a-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.a-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.a-card-dashed { border-style: dashed; border-width: 1.5px; }
+
 .a-muted { color: var(--a-muted); }
 .a-error { color: var(--a-error); margin: 0; }
+
+/* forms */
+.a-form { display: flex; flex-direction: column; gap: 16px; }
+.a-form h2 { margin: 0; font-size: 1.2rem; }
+.a-field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 180px; font-size: 0.9rem; font-weight: 600; }
+.a-field input, .a-field select {
+  font: inherit; font-weight: 400; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--a-border); background: var(--a-surface); color: var(--a-text);
+}
+.a-field input:focus, .a-field select:focus { outline: 2px solid var(--a-primary); outline-offset: 1px; }
+.a-row { display: flex; gap: 14px; flex-wrap: wrap; }
+
+/* buttons */
+.a-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.a-btn {
+  font: inherit; font-weight: 600; padding: 10px 18px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--a-border); background: var(--a-surface); color: var(--a-text); text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.a-btn:hover { border-color: var(--a-muted); }
+.a-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.a-btn-sm { padding: 6px 12px; font-size: 0.9rem; }
+.a-btn-primary { background: var(--a-primary); border-color: var(--a-primary); color: var(--a-on-primary); }
+.a-btn-dark { background: var(--a-dark); border-color: var(--a-dark); color: var(--a-on-dark); }
+.a-btn-danger { color: var(--a-error); border-color: var(--a-error); background: transparent; }
+
+/* record cards (allergies, conditions): two columns on wide screens */
+.a-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px; }
+.a-item { display: flex; flex-direction: column; gap: 12px; }
+.a-item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.a-item-top strong { font-size: 1.05rem; }
+.a-meta { color: var(--a-muted); font-size: 0.92rem; }
+.a-note { background: var(--a-subtle); border: 1px solid var(--a-border); border-radius: 10px; padding: 12px 14px; }
+.a-item .a-actions { margin-top: auto; }
+
+/* status pills */
+.a-pill {
+  flex: none; font-size: 0.85rem; padding: 3px 12px; border-radius: 999px; border: 1px solid var(--a-border);
+  background: var(--a-surface); color: var(--a-text); white-space: nowrap;
+}
+.a-pill-red { color: var(--a-error); border-color: var(--a-error); }
+.a-pill-green { color: var(--a-ok); background: var(--a-ok-soft); border-color: transparent; }
+.a-pill-blue { color: var(--a-primary); background: var(--a-primary-soft); border-color: transparent; }
+.a-pill-warn { color: var(--a-warn); border-color: var(--a-warn); }

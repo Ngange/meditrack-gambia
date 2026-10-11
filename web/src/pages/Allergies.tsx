@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
 import {
   createAllergy,
   deleteAllergy,
@@ -139,14 +138,14 @@ export function AllergiesPage() {
   return (
     <div className="allergies-page">
       <div className="allergies-inner">
-        <Link to="/" className="allergies-back">
-          ‹ Back to dashboard
-        </Link>
-        <div className="allergies-head">
-          <h1>Allergies</h1>
+      <div className="allergies-head">
+          <div>
+            <h1>Allergies</h1>
+            <p className="page-sub">Substances that cause you a reaction, and how severe it is</p>
+          </div>
           {editing === null && (
-            <button type="button" className="a-btn a-btn-primary" onClick={() => openForm('new')}>
-              Add allergy
+            <button type="button" className="a-btn a-btn-dark" onClick={() => openForm('new')}>
+              + Add allergy
             </button>
           )}
         </div>
@@ -234,20 +233,23 @@ export function AllergiesPage() {
         ) : (
           <ul className="a-list">
             {allergies.map((a) => (
-              <li key={a.allergy_id} className="a-card a-item">
-                <div>
+                            <li key={a.allergy_id} className="a-card a-item">
+                <div className="a-item-top">
                   <strong>{a.allergen}</strong>
-                  {a.reaction && <div className="a-muted">{a.reaction}</div>}
-                  <div className={a.severity === 'severe' && a.status === 'active' ? 'a-error' : 'a-muted'}>
-                    {a.severity ? `${capitalize(a.severity)} · ` : ''}
-                    {capitalize(a.status)}
-                  </div>
+                  <span className={`a-pill${a.severity === 'severe' && a.status === 'active' ? ' a-pill-red' : ''}`}>
+                    {a.status === 'resolved' ? 'Resolved' : a.severity ? capitalize(a.severity) : 'Active'}
+                  </span>
                 </div>
+                <div className="a-meta">
+                  {capitalize(a.status)}
+                  {a.severity ? ` · ${capitalize(a.severity)} severity` : ''}
+                </div>
+                {a.reaction && <div className="a-note">{a.reaction}</div>}
                 <div className="a-actions">
-                  <button type="button" className="a-btn" onClick={() => openForm(a)}>
+                  <button type="button" className="a-btn a-btn-sm" onClick={() => openForm(a)}>
                     Edit
                   </button>
-                  <button type="button" className="a-btn a-btn-danger" onClick={() => handleDelete(a)}>
+                  <button type="button" className="a-btn a-btn-sm a-btn-danger" onClick={() => handleDelete(a)}>
                     Delete
                   </button>
                 </div>

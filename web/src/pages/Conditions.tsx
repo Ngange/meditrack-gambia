@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+
 import {
   createCondition,
   deleteCondition,
@@ -130,14 +130,14 @@ export function ConditionsPage() {
   return (
     <div className="allergies-page">
       <div className="allergies-inner">
-        <Link to="/" className="allergies-back">
-          ‹ Back to dashboard
-        </Link>
-        <div className="allergies-head">
-          <h1>Conditions</h1>
+                <div className="allergies-head">
+          <div>
+            <h1>Medical history &amp; conditions</h1>
+            <p className="page-sub">Diagnosed illnesses and ongoing health conditions</p>
+          </div>
           {editing === null && (
-            <button type="button" className="a-btn a-btn-primary" onClick={() => openForm('new')}>
-              Add condition
+            <button type="button" className="a-btn a-btn-dark" onClick={() => openForm('new')}>
+              + Add condition
             </button>
           )}
         </div>
@@ -223,20 +223,20 @@ export function ConditionsPage() {
         ) : (
           <ul className="a-list">
             {conditions.map((c) => (
-              <li key={c.condition_id} className="a-card a-item">
-                <div>
+                            <li key={c.condition_id} className="a-card a-item">
+                <div className="a-item-top">
                   <strong>{c.condition_name}</strong>
-                  <div className="a-muted">
-                    {capitalize(c.status)}
-                    {c.diagnosis_date ? ` · Diagnosed ${c.diagnosis_date}` : ''}
-                  </div>
-                  {c.notes && <div className="a-muted">{c.notes}</div>}
+                  <span className="a-pill">{capitalize(c.status)}</span>
                 </div>
+                <div className="a-meta">
+                  {c.diagnosis_date ? `Diagnosed: ${c.diagnosis_date}` : 'Diagnosis date not recorded'}
+                </div>
+                {c.notes && <div className="a-note">{c.notes}</div>}
                 <div className="a-actions">
-                  <button type="button" className="a-btn" onClick={() => openForm(c)}>
+                  <button type="button" className="a-btn a-btn-sm" onClick={() => openForm(c)}>
                     Edit
                   </button>
-                  <button type="button" className="a-btn a-btn-danger" onClick={() => handleDelete(c)}>
+                  <button type="button" className="a-btn a-btn-sm a-btn-danger" onClick={() => handleDelete(c)}>
                     Delete
                   </button>
                 </div>
