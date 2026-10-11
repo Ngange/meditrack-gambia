@@ -148,6 +148,7 @@ export function deleteCondition(token: string, id: string) {
 export type Summary = {
   allergies: number;
   conditions: number;
+  visits: number;
 };
 
 export function getSummary(token: string) {
@@ -191,5 +192,57 @@ export function updateMyProfile(token: string, input: ProfileInput) {
     method: "PUT",
     headers: auth(token),
     body: JSON.stringify(input),
+  });
+}
+
+
+export type Visit = {
+  visit_id: string;
+  facility_name: string | null;
+  visit_date: string; // YYYY-MM-DD
+  reason: string | null;
+  diagnosis: string | null;
+  treatment: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type VisitInput = {
+  facilityName?: string;
+  visitDate: string;
+  reason?: string;
+  diagnosis?: string;
+  treatment?: string;
+  notes?: string;
+};
+
+export function getVisits(token: string) {
+  return request<{ visits: Visit[] }>("/records/visits", {
+    method: "GET",
+    headers: auth(token),
+  });
+}
+
+export function createVisit(token: string, input: VisitInput) {
+  return request<{ visit: Visit }>("/records/visits", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateVisit(token: string, id: string, input: VisitInput) {
+  return request<{ visit: Visit }>(`/records/visits/${id}`, {
+    method: "PUT",
+    headers: auth(token),
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteVisit(token: string, id: string) {
+  return request<{ deleted: boolean }>(`/records/visits/${id}`, {
+    method: "DELETE",
+    headers: auth(token),
   });
 }

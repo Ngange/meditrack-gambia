@@ -21,6 +21,7 @@ function greeting() {
 const TILES = [
   { key: 'allergies', label: 'Allergies', href: '/allergies' },
   { key: 'conditions', label: 'Conditions', href: '/conditions' },
+  { key: 'visits', label: 'Visits', href: '/visits' },
 ] as const;
 
 export default function HomeScreen() {
@@ -66,7 +67,7 @@ export default function HomeScreen() {
   );
 
   const needsEmergencyInfo = profile !== null && (!profile.blood_group || !profile.emergency_contact_name);
-  const total = summary ? summary.allergies + summary.conditions : 0;
+  const total = summary ? summary.allergies + summary.conditions + summary.visits : 0;
 
   return (
     <ThemedView style={styles.container}>

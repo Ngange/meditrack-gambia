@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllergies, getConditions, type Allergy, type Condition } from '../lib/api';
+import { getAllergies, getConditions, getVisits, type Allergy, type Condition, type Visit } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { getToken } from '../lib/auth-storage';
 import { useShell } from '../components/AppShell';
@@ -12,7 +12,7 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 type Activity = {
   id: string;
   date: string; // YYYY-MM-DD
-  type: 'Allergy' | 'Condition';
+  type: 'Allergy' | 'Condition' | 'Visit';
   title: string;
   detail: string;
   to: string;
@@ -26,6 +26,7 @@ export function DashboardPage() {
 
   const [allergies, setAllergies] = useState<Allergy[]>([]);
   const [conditions, setConditions] = useState<Condition[]>([]);
+  const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -37,9 +38,10 @@ export function DashboardPage() {
         signOutRef.current();
         return;
       }
-      const [a, c] = await Promise.all([getAllergies(token), getConditions(token)]);
+      const [a, c, v] = await Promise.all([getAllergies(token), getConditions(token), getVisits(token)]);
       setAllergies(a.allergies);
       setConditions(c.conditions);
+      setVisits(v.visits);
     } catch (err) {
       const status = (err as { status?: number }).status;
       if (status === 401 || status === 403) {
@@ -79,6 +81,14 @@ export function DashboardPage() {
         .filter(Boolean)
         .join(' · '),
       to: '/conditions',
+    })),
+    ...visits.map<Activity>((v) => ({
+      id: v.visit_id,
+      date: v.visit_date,
+      type: 'Visit',
+      title: `Visit: ${v.facility_name || v.reason || 'Clinic visit'}`,
+      detail: [v.facility_name ? (v.reason ?? '') : '', v.diagnosis ?? '', v.treatment ?? ''].filter(Boolean).join(' · '),
+      to: '/visits',
     })),
   ]
     .sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0))
@@ -181,7 +191,8 @@ export function DashboardPage() {
             </div>
             <div className="a-actions">
               <Link to="/allergies" className="a-btn">+ Add allergy</Link>
-              <Link to="/conditions" className="a-btn a-btn-dark">+ Add condition</Link>
+              <Link to="/conditions" className="a-btn">+ Add condition</Link>
+              <Link to="/visits" className="a-btn a-btn-dark">+ Record visit</Link>
             </div>
           </div>
 

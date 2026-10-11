@@ -10,6 +10,7 @@ import { Spacing } from '@/constants/theme';
 const SECTIONS = [
   { title: 'Allergies', hint: 'Allergens and reactions', href: '/allergies' },
   { title: 'Medical conditions', hint: 'Diagnoses and ongoing conditions', href: '/conditions' },
+  { title: 'Visits', hint: 'Clinic and hospital visits', href: '/visits' },
 ] as const;
 
 export default function RecordsScreen() {

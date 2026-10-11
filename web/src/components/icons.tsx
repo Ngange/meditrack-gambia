@@ -90,3 +90,11 @@ export const IconLogout = () => (
     <line x1="21" y1="12" x2="9" y2="12" />
   </Icon>
 );
+
+export const IconVisit = () => (
+  <Icon>
+    <path d="M3 21h18" />
+    <path d="M5 21V7l7-4 7 4v14" />
+    <path d="M12 9v6M9 12h6" />
+  </Icon>
+);

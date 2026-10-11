@@ -448,6 +448,213 @@ router.delete('/conditions/:id', async (req, res) => {
 });
 
 // ---------------------------------------------------------------
+// Medical visits
+// ---------------------------------------------------------------
+// facility_name is stored as plain text (it is a plain VARCHAR in the schema);
+// reason, diagnosis, treatment and notes are encrypted. visit_date is returned as text.
+const VISIT_COLUMNS = `visit_id, facility_name, visit_date::text AS visit_date,
+  reason_enc, diagnosis_enc, treatment_enc, notes_enc, created_at, updated_at`;
+const VISIT_DUP_MSG =
+  'A visit with the same date, facility and reason is already in your records. Edit the existing entry instead.';
+
+function toVisit(row) {
+  return {
+    visit_id: row.visit_id,
+    facility_name: row.facility_name,
+    visit_date: row.visit_date,
+    reason: decrypt(row.reason_enc),
+    diagnosis: decrypt(row.diagnosis_enc),
+    treatment: decrypt(row.treatment_enc),
+    notes: decrypt(row.notes_enc),
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+function validateVisit(body) {
+  const text = (v) => (typeof v === 'string' ? v.trim() : '');
+  const facility = text(body.facilityName);
+  const date = text(body.visitDate);
+  const reason = text(body.reason);
+  const diagnosis = text(body.diagnosis);
+  const treatment = text(body.treatment);
+  const notes = text(body.notes);
+
+  if (!date) return { error: 'Visit date is required.' };
+  if (!isRealDate(date))
+    return { error: 'Visit date must be a real date in YYYY-MM-DD format.' };
+  if (date > new Date().toISOString().slice(0, 10))
+    return { error: 'Visit date cannot be in the future.' };
+  if (date < '1900-01-01')
+    return { error: 'Visit date is too far in the past.' };
+  if (!facility && !reason)
+    return { error: 'Add the facility or the reason for the visit.' };
+  if (facility.length > 200)
+    return { error: 'Facility name is too long (max 200 characters).' };
+  if (reason.length > 1000)
+    return { error: 'Reason is too long (max 1000 characters).' };
+  if (diagnosis.length > 1000)
+    return { error: 'Diagnosis is too long (max 1000 characters).' };
+  if (treatment.length > 2000)
+    return { error: 'Treatment is too long (max 2000 characters).' };
+  if (notes.length > 2000)
+    return { error: 'Notes are too long (max 2000 characters).' };
+
+  return {
+    value: {
+      facility: facility || null,
+      date,
+      reason: reason || null,
+      diagnosis: diagnosis || null,
+      treatment: treatment || null,
+      notes: notes || null,
+    },
+  };
+}
+
+// Same date + facility + reason (ignoring case and spacing) counts as the same visit.
+// Two different visits on one day are still fine: they differ in facility or reason.
+async function isDuplicateVisit(client, patientId, value, excludeId) {
+  const result = await client.query(
+    `SELECT visit_id, facility_name, reason_enc FROM medical_visits
+     WHERE patient_id = $1 AND visit_date = $2`,
+    [patientId, value.date],
+  );
+  const key = (facility, reason) =>
+    `${normalizeName(facility || '')}|${normalizeName(reason || '')}`;
+  const target = key(value.facility, value.reason);
+  const skip = excludeId ? String(excludeId).toLowerCase() : null;
+  return result.rows.some(
+    (r) =>
+      String(r.visit_id).toLowerCase() !== skip &&
+      key(r.facility_name, decrypt(r.reason_enc)) === target,
+  );
+}
+
+router.get('/visits', async (req, res) => {
+  try {
+    const patientId = await getPatientId(req.user.userId);
+    if (!patientId)
+      return res.status(404).json({ error: 'Patient profile not found.' });
+
+    const result = await pool.query(
+      `SELECT ${VISIT_COLUMNS} FROM medical_visits
+       WHERE patient_id = $1 ORDER BY visit_date DESC, created_at DESC`,
+      [patientId],
+    );
+    res.json({ visits: result.rows.map(toVisit) });
+  } catch (err) {
+    console.error('List visits error:', err);
+    res.status(500).json({ error: 'Could not load visits.' });
+  }
+});
+
+router.post('/visits', async (req, res) => {
+  const { error, value } = validateVisit(req.body || {});
+  if (error) return res.status(400).json({ error });
+
+  try {
+    const patientId = await getPatientId(req.user.userId);
+    if (!patientId)
+      return res.status(404).json({ error: 'Patient profile not found.' });
+
+    const outcome = await withPatientLock(patientId, async (client) => {
+      if (await isDuplicateVisit(client, patientId, value, null))
+        return { duplicate: true };
+      const result = await client.query(
+        `INSERT INTO medical_visits
+           (patient_id, facility_name, visit_date, reason_enc, diagnosis_enc, treatment_enc, notes_enc)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING ${VISIT_COLUMNS}`,
+        [
+          patientId,
+          value.facility,
+          value.date,
+          encrypt(value.reason),
+          encrypt(value.diagnosis),
+          encrypt(value.treatment),
+          encrypt(value.notes),
+        ],
+      );
+      return { row: result.rows[0] };
+    });
+
+    if (outcome.duplicate)
+      return res.status(409).json({ error: VISIT_DUP_MSG });
+    res.status(201).json({ visit: toVisit(outcome.row) });
+  } catch (err) {
+    console.error('Create visit error:', err);
+    res.status(500).json({ error: 'Could not save visit.' });
+  }
+});
+
+router.put('/visits/:id', async (req, res) => {
+  const { error, value } = validateVisit(req.body || {});
+  if (error) return res.status(400).json({ error });
+
+  try {
+    const patientId = await getPatientId(req.user.userId);
+    if (!patientId)
+      return res.status(404).json({ error: 'Patient profile not found.' });
+
+    const outcome = await withPatientLock(patientId, async (client) => {
+      if (await isDuplicateVisit(client, patientId, value, req.params.id))
+        return { duplicate: true };
+      const result = await client.query(
+        `UPDATE medical_visits
+         SET facility_name = $1, visit_date = $2, reason_enc = $3, diagnosis_enc = $4,
+             treatment_enc = $5, notes_enc = $6
+         WHERE visit_id = $7 AND patient_id = $8
+         RETURNING ${VISIT_COLUMNS}`,
+        [
+          value.facility,
+          value.date,
+          encrypt(value.reason),
+          encrypt(value.diagnosis),
+          encrypt(value.treatment),
+          encrypt(value.notes),
+          req.params.id,
+          patientId,
+        ],
+      );
+      return { row: result.rows[0] };
+    });
+
+    if (outcome.duplicate)
+      return res.status(409).json({ error: VISIT_DUP_MSG });
+    if (!outcome.row)
+      return res.status(404).json({ error: 'Visit not found.' });
+    res.json({ visit: toVisit(outcome.row) });
+  } catch (err) {
+    if (err.code === '22P02')
+      return res.status(404).json({ error: 'Visit not found.' });
+    console.error('Update visit error:', err);
+    res.status(500).json({ error: 'Could not update visit.' });
+  }
+});
+
+router.delete('/visits/:id', async (req, res) => {
+  try {
+    const patientId = await getPatientId(req.user.userId);
+    if (!patientId)
+      return res.status(404).json({ error: 'Patient profile not found.' });
+
+    const result = await pool.query(
+      'DELETE FROM medical_visits WHERE visit_id = $1 AND patient_id = $2 RETURNING visit_id',
+      [req.params.id, patientId],
+    );
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: 'Visit not found.' });
+    res.json({ deleted: true });
+  } catch (err) {
+    if (err.code === '22P02')
+      return res.status(404).json({ error: 'Visit not found.' });
+    console.error('Delete visit error:', err);
+    res.status(500).json({ error: 'Could not delete visit.' });
+  }
+});
+
+// ---------------------------------------------------------------
 // Dashboard summary: one query for every record count.
 // Add a line here whenever a new record type is built.
 // ---------------------------------------------------------------
@@ -459,8 +666,9 @@ router.get('/summary', async (req, res) => {
 
     const result = await pool.query(
       `SELECT
-         (SELECT count(*)::int FROM allergies WHERE patient_id = $1) AS allergies,
-         (SELECT count(*)::int FROM medical_conditions WHERE patient_id = $1) AS conditions`,
+        (SELECT count(*)::int FROM allergies WHERE patient_id = $1) AS allergies,
+        (SELECT count(*)::int FROM medical_conditions WHERE patient_id = $1) AS conditions,
+        (SELECT count(*)::int FROM medical_visits WHERE patient_id = $1) AS visits`,
       [patientId],
     );
     res.json({ summary: result.rows[0] });

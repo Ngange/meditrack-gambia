@@ -7,6 +7,7 @@ import { DashboardPage } from './pages/Dashboard';
 import { LoginPage } from './pages/Login';
 import { ProfilePage } from './pages/Profile';
 import { RegisterPage } from './pages/Register';
+import { VisitsPage } from './pages/Visits';
 
 function AppRoutes() {
   const { user, isLoading } = useAuth();
@@ -22,6 +23,7 @@ function AppRoutes() {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/allergies" element={<AllergiesPage />} />
         <Route path="/conditions" element={<ConditionsPage />} />
+        <Route path="/visits" element={<VisitsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>
 

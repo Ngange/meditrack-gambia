@@ -15,6 +15,7 @@ import {
   IconPill,
   IconShare,
   IconUser,
+  IconVisit,
 } from './icons';
 import './AppShell.css';
 
@@ -38,6 +39,7 @@ const NAV: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: IconDashboard, end: true },
   { to: '/allergies', label: 'Allergies', icon: IconAllergy },
   { to: '/conditions', label: 'Conditions', icon: IconCondition },
+  { to: '/visits', label: 'Visits', icon: IconVisit },
   { to: '/medications', label: 'Medications', icon: IconPill, soon: true },
   { to: '/labs', label: 'Lab Results', icon: IconFlask, soon: true },
   { to: '/documents', label: 'Documents', icon: IconFile, soon: true },
