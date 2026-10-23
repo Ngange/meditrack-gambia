@@ -10,10 +10,11 @@ export type RecordApi<T, I> = {
 /**
  * One API object per record type. The backend answers with { [plural]: T[] } for lists and
  * { [singular]: T } for single records, so allergies, conditions, visits and medications
- * all share this one implementation.
+ * all share this one implementation. `path` is the URL segment when it differs from the response key
+ * (lab results answer as `lab_results` but live at /records/lab-results).
  */
-export function createRecordApi<T, I>(plural: string, singular: string): RecordApi<T, I> {
-  const base = `/records/${plural}`;
+export function createRecordApi<T, I>(plural: string, singular: string, path = plural): RecordApi<T, I> {
+  const base = `/records/${path}`;
   return {
     async list() {
       const res = await request<Record<string, T[]>>(base);

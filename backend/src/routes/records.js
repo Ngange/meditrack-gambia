@@ -11,11 +11,13 @@ const models = {
   condition: require('../models/condition'),
   visit: require('../models/visit'),
   medication: require('../models/medication'),
+  labResult: require('../models/labResult'),
 };
 const { validateAllergy } = require('../validators/allergyValidator');
 const { validateCondition } = require('../validators/conditionValidator');
 const { validateVisit } = require('../validators/visitValidator');
 const { validateMedication } = require('../validators/medicationValidator');
+const { validateLabResult, validateLabBatch } = require('../validators/labResultValidator');
 
 const router = express.Router();
 
@@ -24,12 +26,13 @@ const router = express.Router();
 router.use(requireAuth, requireRole('patient'), requirePatient);
 
 // GET / POST / PUT / DELETE for one record type.
-function mountRecords(path, model, validator) {
+function mountRecords(path, model, validator, batchValidator) {
   const controller = createRecordController(model, createRecordService(model));
   const check = validate(validator);
   const r = express.Router();
   r.get('/', controller.list);
   r.post('/', check, controller.create);
+  if (batchValidator) r.post('/batch', validate(batchValidator), controller.createMany);
   r.put('/:id', check, controller.update);
   r.delete('/:id', controller.remove);
   router.use(path, r);
@@ -39,6 +42,7 @@ mountRecords('/allergies', models.allergy, validateAllergy);
 mountRecords('/conditions', models.condition, validateCondition);
 mountRecords('/visits', models.visit, validateVisit);
 mountRecords('/medications', models.medication, validateMedication);
+mountRecords('/lab-results', models.labResult, validateLabResult, validateLabBatch);
 
 // Dashboard counts for every record type (see models/index.js).
 router.get('/summary', summaryController.getSummary);

@@ -56,6 +56,35 @@ function createRecordService(model) {
     return model.toDto(row);
   }
 
+  // Saves several records in one go (for example every result of one blood panel).
+  // All or nothing: if any row is a duplicate, nothing is saved. Rows are numbered from 1 in errors.
+  async function createMany(patientId, values) {
+    const rows = await withPatientLock(patientId, async (client) => {
+      const seen = new Set();
+      const saved = [];
+      for (const [i, value] of values.entries()) {
+        const scope = `${JSON.stringify(duplicate.params(value))}|${duplicate.keyOfValue(value)}`;
+        if (seen.has(scope)) {
+          throw new AppError(409, `Row ${i + 1}: this ${model.label.toLowerCase()} is listed twice.`);
+        }
+        seen.add(scope);
+        if (await isDuplicate(client, patientId, value, null)) {
+          throw new AppError(409, `Row ${i + 1}: ${duplicate.message}`);
+        }
+        const placeholders = columns.map((_, k) => `$${k + 2}`).join(', ');
+        const result = await client.query(
+          `INSERT INTO ${table} (patient_id, ${columns.join(', ')})
+           VALUES ($1, ${placeholders})
+           RETURNING ${selectColumns}`,
+          [patientId, ...columns.map((c) => fields[c](value))],
+        );
+        saved.push(result.rows[0]);
+      }
+      return saved;
+    });
+    return rows.map(model.toDto);
+  }
+
   async function update(patientId, id, value) {
     try {
       const row = await withPatientLock(patientId, async (client) => {
@@ -92,7 +121,7 @@ function createRecordService(model) {
     }
   }
 
-  return { list, create, update, remove };
+  return { list, create, createMany, update, remove };
 }
 
 module.exports = createRecordService;

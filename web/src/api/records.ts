@@ -8,9 +8,10 @@ export type RecordApi<T, I> = {
   remove: (id: string) => Promise<void>;
 };
 
-// plural is the URL segment and the key of the list ("allergies"); singular is the key of one item ("allergy").
-export function createRecordApi<T, I>(plural: string, singular: string): RecordApi<T, I> {
-  const base = `/records/${plural}`;
+// plural is the key of the list ("allergies"); singular is the key of one item ("allergy").
+// path is the URL segment when it differs from plural (lab results answer as lab_results at /records/lab-results).
+export function createRecordApi<T, I>(plural: string, singular: string, path = plural): RecordApi<T, I> {
+  const base = `/records/${path}`;
 
   return {
     async list() {

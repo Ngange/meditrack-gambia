@@ -24,6 +24,8 @@ type Props<T> = {
   /** What a screen reader says for a row, e.g. "Edit allergy: Penicillin". */
   getLabel: (item: T) => string;
   renderItem: (item: T) => ReactNode;
+  /** An optional second button under the Add button, e.g. "Add several results". */
+  secondaryAction?: { label: string; onPress: () => void };
 };
 
 /** The list screen shared by allergies, conditions, visits and medications. */
@@ -36,6 +38,7 @@ export function RecordListScreen<T>({
   getId,
   getLabel,
   renderItem,
+  secondaryAction,
 }: Props<T>) {
   const { data, loading, error, retry } = useFocusLoad(api.list);
 
@@ -63,6 +66,7 @@ export function RecordListScreen<T>({
       )}
 
       <Button title={addLabel} onPress={() => openRecordForm(formPath)} />
+      {secondaryAction ? <Button title={secondaryAction.label} variant="secondary" onPress={secondaryAction.onPress} /> : null}
     </ThemedView>
   );
 }

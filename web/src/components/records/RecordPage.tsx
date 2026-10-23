@@ -16,6 +16,10 @@ type RecordPageProps<T, I> = {
   renderItem: (item: T) => ReactNode;
   /** The question asked before deleting. */
   confirmDelete: (item: T) => string;
+  /** Extra button(s) next to the add button. */
+  headerExtra?: ReactNode;
+  /** Extra content under the heading, above the list (for example a second kind of form). */
+  children?: ReactNode;
 };
 
 // The page every record type shares: heading, add button, form, loading / error / empty states,
@@ -29,6 +33,8 @@ export function RecordPage<T, I>({
   Form,
   renderItem,
   confirmDelete,
+  headerExtra,
+  children,
 }: RecordPageProps<T, I>) {
   const { items, loading, error, editing, editingItem } = crud;
 
@@ -41,9 +47,12 @@ export function RecordPage<T, I>({
             <p className="page-sub">{subtitle}</p>
           </div>
           {editing === null && (
-            <button type="button" className="a-btn a-btn-dark" onClick={crud.openNew}>
-              {addLabel}
-            </button>
+            <div className="a-actions">
+              {headerExtra}
+              <button type="button" className="a-btn a-btn-dark" onClick={crud.openNew}>
+                {addLabel}
+              </button>
+            </div>
           )}
         </div>
 
@@ -57,6 +66,8 @@ export function RecordPage<T, I>({
             onCancel={crud.closeForm}
           />
         )}
+
+        {children}
 
         {loading ? (
           <Loading />

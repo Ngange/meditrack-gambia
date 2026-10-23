@@ -5,6 +5,7 @@ import { LoginPage } from '../features/auth/LoginPage';
 import { RegisterPage } from '../features/auth/RegisterPage';
 import { ConditionsPage } from '../features/conditions/ConditionsPage';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
+import { LabResultsPage } from '../features/labs/LabResultsPage';
 import { MedicationsPage } from '../features/medications/MedicationsPage';
 import { ProfilePage } from '../features/profile/ProfilePage';
 import { VisitsPage } from '../features/visits/VisitsPage';
@@ -25,6 +26,7 @@ export function AppRoutes() {
         <Route path="/conditions" element={<ConditionsPage />} />
         <Route path="/visits" element={<VisitsPage />} />
         <Route path="/medications" element={<MedicationsPage />} />
+        <Route path="/lab-results" element={<LabResultsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>
 

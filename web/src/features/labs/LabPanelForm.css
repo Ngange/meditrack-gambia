@@ -1,0 +1,3 @@
+/* One test per row: name, result and normal range side by side, with a remove button. */
+.lab-panel-row { align-items: end; }
+.lab-panel-row .a-btn { align-self: end; margin-bottom: 2px; }

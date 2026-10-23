@@ -16,6 +16,11 @@ function createRecordController(model, service) {
       res.status(201).json({ [name]: item });
     }),
 
+    createMany: asyncHandler(`Could not save ${plural}.`, async (req, res) => {
+      const items = await service.createMany(req.patientId, req.valid);
+      res.status(201).json({ [plural]: items });
+    }),
+
     update: asyncHandler(`Could not update ${name}.`, async (req, res) => {
       const item = await service.update(req.patientId, req.params.id, req.valid);
       res.json({ [name]: item });

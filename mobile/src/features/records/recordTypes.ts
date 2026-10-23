@@ -21,4 +21,11 @@ export const RECORD_TYPES = [
     hint: 'What you take, how much and how often',
     href: '/medications',
   },
+  {
+    key: 'lab_results',
+    label: 'Lab results',
+    title: 'Lab results',
+    hint: 'Blood tests, scans and other results',
+    href: '/lab-results',
+  },
 ] as const satisfies readonly { key: keyof Summary; label: string; title: string; hint: string; href: string }[];

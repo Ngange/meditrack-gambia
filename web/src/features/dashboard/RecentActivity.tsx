@@ -8,7 +8,7 @@ export function RecentActivity({ activity }: { activity: Activity[] }) {
       <div className="dash-activity-head">
         <div>
           <h2>Recent activity</h2>
-          <p className="page-sub">Your latest visits, medications, allergies and conditions</p>
+          <p className="page-sub">Your latest visits, medications, lab results, allergies and conditions</p>
         </div>
         <div className="a-actions">
           <Link to="/allergies" className="a-btn">

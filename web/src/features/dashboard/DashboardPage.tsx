@@ -51,6 +51,15 @@ export function DashboardPage() {
               .map((c) => ({ key: c.condition_id, name: c.condition_name, detail: capitalize(c.status) }))}
             to="/conditions"
           />
+          <SummaryCard
+            title="Lab results"
+            count={data.labResults.length}
+            tone="blue"
+            rows={data.labResults
+              .slice(0, 2)
+              .map((r) => ({ key: r.result_id, name: r.test_name, detail: r.result ?? r.test_date }))}
+            to="/lab-results"
+          />
         </div>
 
         <RecentActivity activity={buildActivity(data)} />

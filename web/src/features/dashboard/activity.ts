@@ -5,14 +5,14 @@ import type { DashboardData } from './loadDashboard';
 export type Activity = {
   id: string;
   date: string; // YYYY-MM-DD
-  type: 'Allergy' | 'Condition' | 'Visit' | 'Medication';
+  type: 'Allergy' | 'Condition' | 'Visit' | 'Medication' | 'Lab result';
   title: string;
   detail: string;
   to: string;
 };
 
 // Merges every record type into one list, newest first.
-export function buildActivity({ allergies, conditions, visits, medications }: DashboardData, limit = 6): Activity[] {
+export function buildActivity({ allergies, conditions, visits, medications, labResults }: DashboardData, limit = 6): Activity[] {
   const items: Activity[] = [
     ...allergies.map<Activity>((a) => ({
       id: a.allergy_id,
@@ -49,6 +49,14 @@ export function buildActivity({ allergies, conditions, visits, medications }: Da
       title: `Medication: ${m.medication_name}`,
       detail: [m.dosage ?? '', m.frequency ?? '', capitalize(m.status)].filter(Boolean).join(' · '),
       to: '/medications',
+    })),
+    ...labResults.map<Activity>((r) => ({
+      id: r.result_id,
+      date: r.test_date,
+      type: 'Lab result',
+      title: `Lab result: ${r.test_name}`,
+      detail: [r.result ?? '', r.reference_range ? `Normal ${r.reference_range}` : '', r.facility_name ?? ''].filter(Boolean).join(' · '),
+      to: '/lab-results',
     })),
   ];
 

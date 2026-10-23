@@ -5,6 +5,7 @@ export type Summary = {
   conditions: number;
   visits: number;
   medications: number;
+  lab_results: number;
 };
 
 export const getSummary = async () => (await request<{ summary: Summary }>('/records/summary')).summary;
