@@ -1,0 +1,34 @@
+.dash-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; }
+.dash-card { display: flex; flex-direction: column; gap: 14px; min-height: 200px; }
+.dash-card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.dash-card-head h2 { margin: 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.dash-blood {
+  color: var(--a-error); border: 1px solid var(--a-error); border-radius: 8px; padding: 2px 12px;
+  font-weight: 700; background: color-mix(in srgb, var(--a-error) 8%, transparent);
+}
+.dash-blood.is-empty { color: var(--a-muted); border-color: var(--a-border); background: none; font-weight: 500; }
+.dash-lines { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.dash-allergy { color: var(--a-warn); font-weight: 500; }
+.dash-row { display: flex; justify-content: space-between; gap: 12px; font-weight: 500; }
+.dash-card-foot { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--a-border); padding-top: 12px; }
+.dash-link { color: var(--a-primary); font-weight: 600; text-decoration: none; }
+.dash-plain { color: var(--a-text); text-decoration: none; font-weight: 500; }
+.dash-link:hover, .dash-plain:hover { text-decoration: underline; }
+
+.dash-activity { padding: 0; overflow: hidden; }
+.dash-activity-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 22px 24px; }
+.dash-activity-head h2 { margin: 0; font-size: 1.15rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.dash-empty { padding: 0 24px 24px; margin: 0; }
+.dash-table-wrap { overflow-x: auto; border-top: 1px solid var(--a-border); }
+.dash-table { width: 100%; border-collapse: collapse; }
+.dash-table th {
+  text-align: left; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--a-muted);
+  background: var(--a-subtle); padding: 14px 24px; border-bottom: 1px solid var(--a-border);
+}
+.dash-table td { padding: 16px 24px; border-bottom: 1px solid var(--a-border); vertical-align: top; }
+.dash-table tr:last-child td { border-bottom: 0; }
+.dash-right { text-align: right !important; }
+.dash-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: nowrap; }
+.dash-title { font-weight: 600; }
+.dash-detail { font-size: 0.92rem; }
+.dash-details { color: var(--a-text); font-weight: 500; }

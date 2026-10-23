@@ -1,6 +1,6 @@
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from 'expo-secure-store';
 
-const TOKEN_KEY = "meditrack_token";
+const TOKEN_KEY = 'meditrack_token';
 
 export async function saveToken(token: string) {
   await SecureStore.setItemAsync(TOKEN_KEY, token);

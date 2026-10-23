@@ -1,0 +1,102 @@
+/* Palette for the whole signed-in app. Pages inside the shell inherit these. */
+.shell {
+  --a-bg: #f6f8fc;
+  --a-surface: #ffffff;
+  --a-subtle: #f6f7f9;
+  --a-text: #111827;
+  --a-muted: #5b6475;
+  --a-border: #e3e8f0;
+  --a-primary: #1c5fb5;
+  --a-primary-soft: #e8f0fb;
+  --a-on-primary: #ffffff;
+  --a-dark: #111827;
+  --a-on-dark: #ffffff;
+  --a-error: #c62828;
+  --a-warn: #a24a05;
+  --a-ok: #1b7a3a;
+  --a-ok-soft: #e6f4ea;
+  --a-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  display: flex;
+  min-height: 100vh;
+  background: var(--a-bg);
+  color: var(--a-text);
+  text-align: left;
+}
+@media (prefers-color-scheme: dark) {
+  .shell {
+    --a-bg: #0b1220;
+    --a-surface: #141d2e;
+    --a-subtle: #1b2638;
+    --a-text: #e8edf5;
+    --a-muted: #9aa8bd;
+    --a-border: #2a374c;
+    --a-primary: #6fb1f2;
+    --a-primary-soft: #1a2c47;
+    --a-on-primary: #0b1220;
+    --a-dark: #e8edf5;
+    --a-on-dark: #0b1220;
+    --a-error: #f28b82;
+    --a-warn: #f0a560;
+    --a-ok: #6fcf8e;
+    --a-ok-soft: #153322;
+    --a-shadow: none;
+  }
+}
+
+/* ---- sidebar ---- */
+.sb {
+  width: 250px; flex: none; background: var(--a-surface); border-right: 1px solid var(--a-border);
+  display: flex; flex-direction: column; justify-content: space-between;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.sb-nav { display: flex; flex-direction: column; padding: 12px 0; }
+.sb-link {
+  display: flex; align-items: center; gap: 14px; padding: 13px 20px; color: var(--a-muted);
+  text-decoration: none; font: inherit; font-size: 1rem; font-weight: 500; background: none;
+  border: 0; border-left: 3px solid transparent; cursor: pointer; text-align: left; width: 100%; box-sizing: border-box;
+}
+.sb-link:hover { color: var(--a-text); }
+.sb-link.is-active { color: var(--a-primary); background: var(--a-primary-soft); border-left-color: var(--a-primary); }
+.sb-link.is-soon { cursor: default; opacity: 0.55; }
+.sb-link.is-soon:hover { color: var(--a-muted); }
+.sb-soon { margin-left: auto; font-style: normal; font-size: 0.7rem; border: 1px solid var(--a-border); border-radius: 999px; padding: 1px 8px; }
+.sb-foot { border-top: 1px solid var(--a-border); padding-bottom: 14px; }
+.sb-signout { color: var(--a-error); }
+.sb-status { display: flex; align-items: center; gap: 10px; padding: 6px 20px 0; font-weight: 500; font-size: 0.9rem; }
+.sb-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--a-ok); }
+.sb-version { padding: 4px 20px 0; font-size: 0.8rem; color: var(--a-muted); }
+
+/* ---- header + content ---- */
+.shell-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.shell-head {
+  display: flex; align-items: center; gap: 16px; margin: 0 40px; padding: 28px 0 20px;
+  border-bottom: 1px solid var(--a-border);
+}
+.shell-logo {
+  width: 56px; height: 56px; flex: none; border-radius: 14px; background: var(--a-surface);
+  border: 1px solid var(--a-border); box-shadow: var(--a-shadow); color: var(--a-primary);
+  display: grid; place-items: center; overflow: hidden;
+}
+.shell-logo-img { width: 100%; height: 100%; object-fit: contain; }
+.shell-title h1 { margin: 0; font-size: 1.9rem; line-height: 1.15; letter-spacing: -0.01em; }
+.shell-title p { margin: 2px 0 0; color: var(--a-muted); }
+.shell-hi { margin-left: auto; color: var(--a-muted); font-size: 1.05rem; white-space: nowrap; }
+.shell-hi strong { color: var(--a-text); }
+.shell-toggle {
+  display: none; background: var(--a-surface); color: var(--a-text); border: 1px solid var(--a-border);
+  border-radius: 10px; padding: 8px; cursor: pointer;
+}
+.shell-main { flex: 1; padding: 28px 40px 48px; }
+
+/* ---- tablet / phone ---- */
+@media (max-width: 900px) {
+  .sb {
+    position: fixed; z-index: 30; left: 0; top: 0; transform: translateX(-100%); transition: transform 0.18s ease;
+  }
+  .sb.is-open { transform: none; box-shadow: 0 0 40px rgba(0, 0, 0, 0.25); }
+  .shell-toggle { display: block; }
+  .shell-head { margin: 0 16px; padding: 16px 0; flex-wrap: wrap; gap: 12px; }
+  .shell-title h1 { font-size: 1.35rem; }
+  .shell-title p { display: none; }
+  .shell-main { padding: 20px 16px 40px; }
+}

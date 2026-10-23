@@ -26,11 +26,11 @@ export function Button({ title, variant = 'primary', loading = false, disabled, 
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
-      style={({ pressed }) => [
+      style={(state) => [
         styles.base,
         { backgroundColor, borderColor },
-        (pressed || (disabled && !loading)) && styles.dimmed,
-        typeof style === 'function' ? style({ pressed }) : style,
+        (state.pressed || (disabled && !loading)) && styles.dimmed,
+        typeof style === 'function' ? style(state) : style,
       ]}
       {...rest}>
       {loading ? (

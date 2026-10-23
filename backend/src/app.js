@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const env = require('./config/env');
 const pool = require('./config/db');
+const notFound = require('./middleware/notFound');
+const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
@@ -27,6 +29,10 @@ app.use('/records', require('./routes/records'));
 // app.use("/shares", require("./routes/shares"));
 // app.use("/timeline", require("./routes/timeline"));
 // app.use("/admin", require("./routes/admin"));
+
+// Must come after all routes: unknown URLs, then every error thrown above.
+app.use(notFound);
+app.use(errorHandler);
 
 app.listen(env.port, () => {
   console.log(`MediTrack API listening on port ${env.port}`);

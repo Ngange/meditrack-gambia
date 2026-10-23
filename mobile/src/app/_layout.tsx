@@ -1,33 +1,25 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { Colors } from '@/constants/theme';
-import { AuthProvider, useAuth } from '@/lib/auth-context';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { ReminderSync } from '@/features/medications/ReminderSync';
+import { useAuthRedirect } from '@/hooks/useAuthRedirect';
+import { configureReminders } from '@/services/reminders';
 
 SplashScreen.preventAutoHideAsync();
+configureReminders();
 
 function RootNavigator() {
-  const { user, isLoading } = useAuth();
+  const { isLoading } = useAuth();
   const segments = useSegments();
-  const router = useRouter();
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
 
-  useEffect(() => {
-    if (isLoading) return;
-
-    const inAuthGroup = segments[0] === 'login' || segments[0] === 'register';
-
-    if (!user && !inAuthGroup) {
-      router.replace('/login');
-    } else if (user && inAuthGroup) {
-      router.replace('/');
-    }
-  }, [user, isLoading, segments]);
+  useAuthRedirect();
 
   if (isLoading) return null;
 
@@ -41,6 +33,7 @@ function RootNavigator() {
     <SafeAreaView
       edges={inTabs ? ['top'] : ['top', 'bottom']}
       style={{ flex: 1, backgroundColor: colors.background }}>
+      <ReminderSync />
       <Stack screenOptions={{ headerShown: false }} />
     </SafeAreaView>
   );
