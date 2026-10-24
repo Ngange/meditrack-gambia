@@ -33,15 +33,23 @@ export function setUnauthorizedHandler(handler: (() => void) | null) {
   onUnauthorized = handler;
 }
 
+/** For code that talks to the server without `request` (file downloads). */
+export function notifyUnauthorized() {
+  onUnauthorized?.();
+}
+
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  /** A plain object is sent as JSON; FormData (file uploads) is sent as-is. */
   body?: unknown;
   /** Send the saved token. Turn off for login and register. */
   auth?: boolean;
 };
 
 export async function request<T>(path: string, { method = 'GET', body, auth = true }: RequestOptions = {}): Promise<T> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const isForm = body instanceof FormData;
+  // For FormData the browser sets the Content-Type itself, including the multipart boundary.
+  const headers: Record<string, string> = isForm ? {} : { 'Content-Type': 'application/json' };
 
   if (auth) {
     const token = getToken();
@@ -57,7 +65,7 @@ export async function request<T>(path: string, { method = 'GET', body, auth = tr
     res = await fetch(`${API_URL}${path}`, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
     });
   } catch {
     throw new ApiError('Could not reach the server. Check your connection and try again.', 0);

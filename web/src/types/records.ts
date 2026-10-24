@@ -116,4 +116,38 @@ export type Summary = {
   visits: number;
   medications: number;
   lab_results: number;
+  documents: number;
 };
+
+export const DOCUMENT_TYPES = ['prescription', 'lab_report', 'discharge_summary', 'medical_certificate', 'other'] as const;
+export type DocumentType = (typeof DOCUMENT_TYPES)[number];
+
+export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
+  prescription: 'Prescription',
+  lab_report: 'Lab report',
+  discharge_summary: 'Discharge summary',
+  medical_certificate: 'Medical certificate',
+  other: 'Other',
+};
+
+export type MedicalDocument = {
+  document_id: string;
+  document_type: DocumentType;
+  file_name: string;
+  description: string | null;
+  /** The date on the document itself (YYYY-MM-DD); null for older uploads. */
+  document_date: string | null;
+  upload_date: string;
+};
+
+/** Adding sends the file; editing sends only the details (type, note, shown name). */
+export type DocumentInput = {
+  documentType: DocumentType;
+  description?: string;
+  documentDate?: string;
+  fileName?: string;
+  file?: File;
+};
+
+export const MAX_FILE_BYTES = 10 * 1024 * 1024;
+export const ALLOWED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'] as const;

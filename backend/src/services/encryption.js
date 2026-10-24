@@ -35,4 +35,20 @@ function decrypt(packed) {
   );
 }
 
-module.exports = { encrypt, decrypt };
+// Same cipher for whole files. Stored layout: 12-byte IV | 16-byte auth tag | ciphertext.
+function encryptBuffer(plain) {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const encrypted = Buffer.concat([cipher.update(plain), cipher.final()]);
+  return Buffer.concat([iv, cipher.getAuthTag(), encrypted]);
+}
+
+function decryptBuffer(packed) {
+  const iv = packed.subarray(0, 12);
+  const tag = packed.subarray(12, 28);
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+  decipher.setAuthTag(tag);
+  return Buffer.concat([decipher.update(packed.subarray(28)), decipher.final()]);
+}
+
+module.exports = { encrypt, decrypt, encryptBuffer, decryptBuffer };

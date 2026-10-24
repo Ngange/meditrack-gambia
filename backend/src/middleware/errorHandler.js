@@ -11,6 +11,14 @@ function errorHandler(err, req, res, next) {
     return res.status(err.status).json({ error: err.message });
   }
 
+  // multer: an upload that is too big, or sent under the wrong field name.
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: 'That file is too large. The limit is 10 MB.' });
+  }
+  if (err.name === 'MulterError') {
+    return res.status(400).json({ error: 'Upload one file at a time.' });
+  }
+
   // Malformed JSON in the request body.
   if (err.type === 'entity.parse.failed') {
     return res.status(400).json({ error: 'Request body is not valid JSON.' });

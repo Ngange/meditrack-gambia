@@ -29,15 +29,28 @@ export function setUnauthorizedHandler(handler: (() => void) | null) {
   onUnauthorized = handler;
 }
 
+/** For code that talks to the server without `request` (file downloads). */
+export function notifyUnauthorized() {
+  onUnauthorized?.();
+}
+
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  /** A plain object is sent as JSON; FormData (file uploads) is sent as-is. */
   body?: unknown;
+  /** Longer for uploads: a 10 MB photo on a weak connection needs more than the default. */
+  timeoutMs?: number;
   /** Attach the saved token. Login and register switch this off. */
   auth?: boolean;
 };
 
-export async function request<T>(path: string, { method = 'GET', body, auth = true }: RequestOptions = {}) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+export async function request<T>(
+  path: string,
+  { method = 'GET', body, auth = true, timeoutMs = REQUEST_TIMEOUT_MS }: RequestOptions = {},
+) {
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+  // For FormData the browser/phone sets the Content-Type itself, including the multipart boundary.
+  const headers: Record<string, string> = isForm ? {} : { 'Content-Type': 'application/json' };
 
   if (auth) {
     const token = await getToken();
@@ -49,14 +62,14 @@ export async function request<T>(path: string, { method = 'GET', body, auth = tr
   }
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
       signal: controller.signal,
     });
   } catch {

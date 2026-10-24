@@ -6,4 +6,5 @@ module.exports = [
   require('./visit'),
   require('./medication'),
   require('./labResult'),
+  require('./document'),
 ];
