@@ -35,5 +35,8 @@ export function useRecordForm<I>(api: FormApi<I>, id?: string) {
     confirmDestructive(title, message, () => void run(() => api.remove(id), setDeleting));
   };
 
-  return { isEdit: Boolean(id), saving, deleting, formError, submit, confirmRemove };
+  /** Saving that needs more than one call (for example a visit with its records). */
+  const submitWith = (action: () => Promise<unknown>) => run(action, setSaving);
+
+  return { isEdit: Boolean(id), saving, deleting, formError, submit, submitWith, confirmRemove };
 }

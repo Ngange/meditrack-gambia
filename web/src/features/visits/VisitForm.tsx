@@ -4,11 +4,15 @@ import { TextField } from '../../components/forms/TextField';
 import { RecordForm } from '../../components/records/RecordForm';
 import type { RecordFormProps } from '../../components/records/types';
 import { useFormState } from '../../hooks/useFormState';
-import type { Visit, VisitInput } from '../../types/records';
+import type { Visit } from '../../types/records';
 import { today } from '../../utils/dates';
+import { checkExtras, emptyExtras, type Extras } from './extras';
+import { LinkedRecords } from './LinkedRecords';
+import type { VisitFormInput } from './saveVisit';
 import { validateVisit } from './validation';
+import { VisitExtrasFields } from './VisitExtrasFields';
 
-export function VisitForm({ initial, saving, error, onSubmit, onCancel }: RecordFormProps<Visit, VisitInput>) {
+export function VisitForm({ initial, saving, error, onSubmit, onCancel }: RecordFormProps<Visit, VisitFormInput>) {
   const { values, bind } = useFormState({
     date: initial?.visit_date ?? today(),
     facility: initial?.facility_name ?? '',
@@ -18,11 +22,14 @@ export function VisitForm({ initial, saving, error, onSubmit, onCancel }: Record
     notes: initial?.notes ?? '',
   });
   const [localError, setLocalError] = useState('');
+  const [extras, setExtras] = useState<Extras>(emptyExtras);
 
   function submit() {
     const problem = validateVisit(values);
     setLocalError(problem ?? '');
     if (problem) return;
+    const checked = initial ? undefined : checkExtras(extras);
+    if (checked?.error) return setLocalError(checked.error);
     onSubmit({
       facilityName: values.facility.trim(),
       visitDate: values.date,
@@ -30,6 +37,7 @@ export function VisitForm({ initial, saving, error, onSubmit, onCancel }: Record
       diagnosis: values.diagnosis.trim(),
       treatment: values.treatment.trim(),
       notes: values.notes.trim(),
+      extras: checked,
     });
   }
 
@@ -57,6 +65,7 @@ export function VisitForm({ initial, saving, error, onSubmit, onCancel }: Record
         <TextField label="Treatment (optional)" placeholder="e.g. Continue Amlodipine 5mg daily" maxLength={2000} {...bind('treatment')} />
       </FormRow>
       <TextField label="Notes (optional)" maxLength={2000} {...bind('notes')} />
+      {initial ? <LinkedRecords visitId={initial.visit_id} /> : <VisitExtrasFields extras={extras} onChange={setExtras} />}
     </RecordForm>
   );
 }

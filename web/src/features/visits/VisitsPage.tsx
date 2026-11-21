@@ -1,12 +1,12 @@
-import { visitsApi } from '../../api/visits';
 import { RecordPage } from '../../components/records/RecordPage';
 import { useRecordCrud } from '../../hooks/useRecordCrud';
-import type { Visit, VisitInput } from '../../types/records';
+import type { Visit } from '../../types/records';
 import { VisitCard } from './VisitCard';
 import { VisitForm } from './VisitForm';
+import { visitFormApi, type VisitFormInput } from './saveVisit';
 
 export function VisitsPage() {
-  const crud = useRecordCrud<Visit, VisitInput>(visitsApi, (v) => v.visit_id);
+  const crud = useRecordCrud<Visit, VisitFormInput>(visitFormApi, (v) => v.visit_id);
 
   return (
     <RecordPage

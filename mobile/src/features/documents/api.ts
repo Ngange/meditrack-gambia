@@ -4,7 +4,7 @@ import type { DocumentInput, MedicalDocument } from './types';
 
 const base = createRecordApi<MedicalDocument, DocumentInput>('documents', 'document');
 
-function toForm({ file, documentType, description, documentDate, fileName }: DocumentInput) {
+function toForm({ file, documentType, description, documentDate, visitId, fileName }: DocumentInput) {
   const form = new FormData();
   if (file?.file) {
     // Web: a real File object.
@@ -16,6 +16,7 @@ function toForm({ file, documentType, description, documentDate, fileName }: Doc
   form.append('documentType', documentType);
   if (description) form.append('description', description);
   if (documentDate) form.append('documentDate', documentDate);
+  if (visitId) form.append('visitId', visitId);
   if (fileName) form.append('fileName', fileName);
   return form;
 }
@@ -35,10 +36,10 @@ export const documentApi = {
   },
 
   /** Edits the details only (type, description, shown name). The file itself never changes. */
-  async update(id: string, { documentType, description, documentDate, fileName }: DocumentInput) {
+  async update(id: string, { documentType, description, documentDate, visitId, fileName }: DocumentInput) {
     const res = await request<{ document: MedicalDocument }>(`/records/documents/${id}`, {
       method: 'PUT',
-      body: { documentType, description, documentDate, fileName },
+      body: { documentType, description, documentDate, visitId, fileName },
     });
     return res.document;
   },

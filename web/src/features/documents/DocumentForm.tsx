@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { TextField } from '../../components/forms/TextField';
 import { RecordForm } from '../../components/records/RecordForm';
 import type { RecordFormProps } from '../../components/records/types';
+import { VisitPicker } from '../visits/VisitPicker';
 import { useFormState } from '../../hooks/useFormState';
 import { DOCUMENT_TYPES, DOCUMENT_TYPE_LABELS, type DocumentInput, type DocumentType, type MedicalDocument } from '../../types/records';
 import { today } from '../../utils/dates';
@@ -17,12 +18,14 @@ export function DocumentForm({ initial, saving, error, onSubmit, onCancel }: Rec
   });
   const [file, setFile] = useState<File | null>(null);
   const [localError, setLocalError] = useState('');
+  const [visitId, setVisitId] = useState<string | null>(initial?.visit_id ?? null);
 
   function submit() {
     const problem = (initial ? validateFileName(values.fileName) : validateFile(file)) ?? validateDocumentDate(values.documentDate);
     setLocalError(problem ?? '');
     if (problem) return;
     onSubmit({
+      visitId,
       documentType: values.documentType as DocumentType,
       description: values.description.trim(),
       documentDate: values.documentDate,
@@ -52,6 +55,7 @@ export function DocumentForm({ initial, saving, error, onSubmit, onCancel }: Rec
       </label>
       <TextField label="Date on the document (optional)" type="date" max={today()} {...bind('documentDate')} />
       <TextField label="Note (optional)" placeholder="e.g. Malaria treatment, May 2026" maxLength={1000} {...bind('description')} />
+      <VisitPicker value={visitId} onChange={setVisitId} />
     </RecordForm>
   );
 }

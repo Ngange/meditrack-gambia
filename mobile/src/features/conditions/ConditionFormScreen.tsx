@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { RecordFormScreen } from '@/components/records/RecordFormScreen';
 import { ChipGroup } from '@/components/ui/chip-group';
 import { Input } from '@/components/ui/input';
+import { VisitPicker } from '@/features/visits/VisitPicker';
 import { useFormState } from '@/hooks/useFormState';
 import { useRecordForm } from '@/hooks/useRecordForm';
 import { useRouteItem } from '@/hooks/useRouteItem';
@@ -21,11 +22,12 @@ export function ConditionFormScreen() {
     status: condition?.status ?? 'active',
   });
   const [errors, setErrors] = useState<ConditionErrors>({});
+  const [visitId, setVisitId] = useState<string | null>(condition?.visit_id ?? null);
 
   function handleSave() {
     const result = validateCondition(values);
     setErrors(result.errors);
-    if (result.input) void form.submit(result.input);
+    if (result.input) void form.submit({ ...result.input, visitId });
   }
 
   return (
@@ -55,6 +57,7 @@ export function ConditionFormScreen() {
         onChange={(v) => v && set('status', v)}
       />
       <Input label="Notes (optional)" placeholder="e.g. Managed with diet and medication" {...bind('notes')} />
+      <VisitPicker value={visitId} onChange={setVisitId} />
     </RecordFormScreen>
   );
 }

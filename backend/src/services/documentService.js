@@ -4,6 +4,7 @@ const AppError = require('../utils/AppError');
 const { encrypt, decrypt, encryptBuffer, decryptBuffer } = require('./encryption');
 const { withPatientLock } = require('./patientService');
 const storage = require('./storageService');
+const { assertVisitOwned } = require('./visitLink');
 const { TYPES, decodeUploadName, detectKind, extensionOf, family, sanitizeFileName } = require('../utils/files');
 
 const MAX_DOCUMENTS = 200;
@@ -40,14 +41,15 @@ async function upload(patientId, file, details) {
   const key = await storage.save(encryptBuffer(file.buffer));
   try {
     const row = await withPatientLock(patientId, async (client) => {
+      await assertVisitOwned(client, patientId, details.visitId);
       const count = await client.query(`SELECT count(*)::int AS n FROM ${table} WHERE patient_id = $1`, [patientId]);
       if (count.rows[0].n >= MAX_DOCUMENTS) {
         throw new AppError(400, `You can keep up to ${MAX_DOCUMENTS} documents. Delete one to add another.`);
       }
       const result = await client.query(
-        `INSERT INTO ${table} (patient_id, document_type, file_name, file_path_enc, description_enc, document_date)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING ${selectColumns}`,
-        [patientId, details.documentType, fileName, encrypt(key), encrypt(details.description), details.documentDate],
+        `INSERT INTO ${table} (patient_id, document_type, file_name, file_path_enc, description_enc, document_date, visit_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING ${selectColumns}`,
+        [patientId, details.documentType, fileName, encrypt(key), encrypt(details.description), details.documentDate, details.visitId],
       );
       return result.rows[0];
     });
@@ -82,14 +84,15 @@ async function download(patientId, id) {
 // The shown name must keep the same kind of extension so it still matches the stored bytes.
 async function updateDetails(patientId, id, details) {
   const row = await findRow(patientId, id);
+  await assertVisitOwned(pool, patientId, details.visitId);
   const fileName = details.fileName || row.file_name;
   if (family(extensionOf(fileName)) !== family(extensionOf(row.file_name))) {
     throw new AppError(400, `The file name must keep its .${extensionOf(row.file_name)} ending.`);
   }
   const result = await pool.query(
-    `UPDATE ${table} SET document_type = $1, file_name = $2, description_enc = $3, document_date = $4
-     WHERE ${idCol} = $5 AND patient_id = $6 RETURNING ${selectColumns}`,
-    [details.documentType, fileName, encrypt(details.description), details.documentDate, id, patientId],
+    `UPDATE ${table} SET document_type = $1, file_name = $2, description_enc = $3, document_date = $4, visit_id = $5
+     WHERE ${idCol} = $6 AND patient_id = $7 RETURNING ${selectColumns}`,
+    [details.documentType, fileName, encrypt(details.description), details.documentDate, details.visitId, id, patientId],
   );
   return model.toDto(result.rows[0]);
 }

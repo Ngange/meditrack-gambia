@@ -11,6 +11,7 @@ export type Medication = {
   end_date: string | null;
   status: MedicationStatus;
   reminder_times: string[]; // "HH:MM", 24-hour, phone's timezone
+  visit_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -23,6 +24,7 @@ export type MedicationInput = {
   endDate?: string;
   status?: MedicationStatus;
   reminderTimes?: string[];
+  visitId?: string | null;
 };
 
 export const MAX_REMINDERS = 6;

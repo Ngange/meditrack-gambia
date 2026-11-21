@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { RecordFormScreen } from '@/components/records/RecordFormScreen';
 import { Input } from '@/components/ui/input';
+import { VisitPicker } from '@/features/visits/VisitPicker';
 import { useFormState } from '@/hooks/useFormState';
 import { useRecordForm } from '@/hooks/useRecordForm';
 import { useRouteItem } from '@/hooks/useRouteItem';
@@ -22,11 +23,12 @@ export function LabResultFormScreen() {
     facility: lab?.facility_name ?? '',
   });
   const [errors, setErrors] = useState<LabResultErrors>({});
+  const [visitId, setVisitId] = useState<string | null>(lab?.visit_id ?? null);
 
   function handleSave() {
     const result = validateLabResult(values);
     setErrors(result.errors);
-    if (result.input) void form.submit(result.input);
+    if (result.input) void form.submit({ ...result.input, visitId });
   }
 
   return (
@@ -47,6 +49,7 @@ export function LabResultFormScreen() {
       <Input label="Result (optional)" placeholder="e.g. 5.4 mmol/L" {...bind('result')} />
       <Input label="Normal range (optional)" placeholder="e.g. 3.9 - 5.5 mmol/L" {...bind('referenceRange')} />
       <Input label="Lab or facility (optional)" placeholder="e.g. EFSTH Laboratory" {...bind('facility')} />
+      <VisitPicker value={visitId} onChange={setVisitId} />
     </RecordFormScreen>
   );
 }

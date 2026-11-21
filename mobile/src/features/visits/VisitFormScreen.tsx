@@ -8,6 +8,10 @@ import { useRouteItem } from '@/hooks/useRouteItem';
 import { todayLocal } from '@/utils/dates';
 
 import { visitApi } from './api';
+import { checkExtras, emptyExtras, type Extras } from './extras';
+import { LinkedRecords } from './LinkedRecords';
+import { saveVisitWithRecords } from './saveVisit';
+import { VisitExtrasFields } from './VisitExtrasFields';
 import type { Visit } from './types';
 import { validateVisit, type VisitErrors } from './validation';
 
@@ -23,18 +27,28 @@ export function VisitFormScreen() {
     notes: visit?.notes ?? '',
   });
   const [errors, setErrors] = useState<VisitErrors>({});
+  const [extras, setExtras] = useState<Extras>(emptyExtras);
+  const [extrasError, setExtrasError] = useState('');
 
   function handleSave() {
     const result = validateVisit(values);
     setErrors(result.errors);
-    if (result.input) void form.submit(result.input);
+    setExtrasError('');
+    if (!result.input) return;
+    const visit = result.input;
+    if (form.isEdit) return void form.submit(visit);
+
+    const checked = checkExtras(extras);
+    if (checked.error) return setExtrasError(checked.error);
+    if (checked.isEmpty) return void form.submit(visit);
+    void form.submitWith(() => saveVisitWithRecords(visit, checked));
   }
 
   return (
     <RecordFormScreen
       noun="visit"
       {...form}
-      formError={form.formError || errors.form || ''}
+      formError={form.formError || errors.form || extrasError}
       onSave={handleSave}
       onDelete={() => form.confirmRemove('Delete visit', 'Remove this visit from your records?')}>
       <Input
@@ -54,6 +68,7 @@ export function VisitFormScreen() {
       <Input label="Diagnosis (optional)" placeholder="e.g. Hypertension (controlled)" {...bind('diagnosis')} />
       <Input label="Treatment (optional)" placeholder="e.g. Continue Amlodipine 5mg daily" {...bind('treatment')} />
       <Input label="Notes (optional)" {...bind('notes')} />
+      {visit ? <LinkedRecords visitId={visit.visit_id} /> : <VisitExtrasFields extras={extras} onChange={setExtras} />}
     </RecordFormScreen>
   );
 }

@@ -30,7 +30,7 @@ export const NAV: NavItem[] = [
   { to: '/medications', label: 'Medications', icon: IconPill },
   { to: '/lab-results', label: 'Lab Results', icon: IconFlask },
   { to: '/documents', label: 'Documents', icon: IconFile },
-  { to: '/timeline', label: 'Timeline', icon: IconClock, soon: true },
+  { to: '/timeline', label: 'Timeline', icon: IconClock },
   { to: '/share', label: 'Share Records', icon: IconShare, soon: true },
   { to: '/profile', label: 'Profile', icon: IconUser },
 ];

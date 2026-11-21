@@ -8,6 +8,7 @@ export type Condition = {
   diagnosis_date: string | null; // YYYY-MM-DD
   status: ConditionStatus;
   notes: string | null;
+  visit_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -17,4 +18,6 @@ export type ConditionInput = {
   diagnosisDate?: string;
   status?: ConditionStatus;
   notes?: string;
+  /** The visit this came from (null / missing = none). */
+  visitId?: string | null;
 };

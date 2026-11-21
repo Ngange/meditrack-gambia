@@ -1,4 +1,5 @@
 const { clean } = require('../utils/text');
+const { parseVisitId } = require('../utils/ids');
 const { isRealDate, today, EARLIEST_DATE } = require('../utils/dates');
 
 function validateLabResult(body) {
@@ -7,6 +8,8 @@ function validateLabResult(body) {
   const result = clean(body.result);
   const referenceRange = clean(body.referenceRange);
   const facility = clean(body.facilityName);
+  const visit = parseVisitId(body.visitId);
+  if (visit.error) return { error: visit.error };
 
   if (!testName) return { error: 'Test name is required.' };
   if (testName.length > 200) return { error: 'Test name is too long (max 200 characters).' };
@@ -25,6 +28,7 @@ function validateLabResult(body) {
       result: result || null,
       referenceRange: referenceRange || null,
       facility: facility || null,
+      visitId: visit.value,
     },
   };
 }
@@ -46,6 +50,7 @@ function validateLabBatch(body) {
     const checked = validateLabResult({
       testDate: body.testDate,
       facilityName: body.facilityName,
+      visitId: body.visitId,
       ...(row && typeof row === 'object' ? row : {}),
     });
     if (checked.error) return { error: `Row ${i + 1}: ${checked.error}` };

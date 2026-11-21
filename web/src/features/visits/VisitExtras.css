@@ -1,0 +1,6 @@
+.visit-extras { border: 1px solid var(--a-line, #d9dee7); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; margin: 0; }
+.visit-extras legend { font-weight: 600; padding: 0 6px; }
+.visit-extras h3 { margin: 8px 0 0; font-size: 0.95rem; }
+.visit-extra-row { align-items: end; }
+.visit-file { align-self: center; font-weight: 500; }
+.visit-linked { display: grid; gap: 4px; }

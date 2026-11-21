@@ -1,4 +1,5 @@
 const { clean } = require('../utils/text');
+const { parseVisitId } = require('../utils/ids');
 const { isRealDate, today } = require('../utils/dates');
 
 const STATUSES = ['active', 'resolved', 'chronic'];
@@ -7,6 +8,8 @@ function validateCondition(body) {
   const name = clean(body.conditionName);
   const notes = clean(body.notes);
   const date = clean(body.diagnosisDate);
+  const visit = parseVisitId(body.visitId);
+  if (visit.error) return { error: visit.error };
   if (!name) return { error: 'Condition name is required.' };
   if (name.length > 200)
     return { error: 'Condition name is too long (max 200 characters).' };
@@ -30,6 +33,7 @@ function validateCondition(body) {
       date: date || null,
       status: body.status || 'active',
       notes: notes || null,
+      visitId: visit.value,
     },
   };
 }

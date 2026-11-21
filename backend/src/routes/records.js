@@ -6,6 +6,8 @@ const createRecordService = require('../services/recordService');
 const createRecordController = require('../controllers/recordController');
 const documentController = require('../controllers/documentController');
 const upload = require('../middleware/upload');
+const visitBundleController = require('../controllers/visitBundleController');
+const timelineController = require('../controllers/timelineController');
 const summaryController = require('../controllers/summaryController');
 
 const models = {
@@ -19,6 +21,7 @@ const { validateAllergy } = require('../validators/allergyValidator');
 const { validateCondition } = require('../validators/conditionValidator');
 const { validateVisit } = require('../validators/visitValidator');
 const { validateMedication } = require('../validators/medicationValidator');
+const { validateVisitBundle } = require('../validators/visitBundleValidator');
 const { validateDocumentDetails } = require('../validators/documentValidator');
 const { validateLabResult, validateLabBatch } = require('../validators/labResultValidator');
 
@@ -43,6 +46,10 @@ function mountRecords(path, model, validator, batchValidator) {
 
 mountRecords('/allergies', models.allergy, validateAllergy);
 mountRecords('/conditions', models.condition, validateCondition);
+// A visit together with its diagnoses, prescriptions and tests (all or nothing), and what came from a visit.
+// These sit before the plain /visits routes so "with-records" is never read as a visit id.
+router.post('/visits/with-records', validate(validateVisitBundle), visitBundleController.create);
+router.get('/visits/:id/linked', visitBundleController.linked);
 mountRecords('/visits', models.visit, validateVisit);
 mountRecords('/medications', models.medication, validateMedication);
 mountRecords('/lab-results', models.labResult, validateLabResult, validateLabBatch);
@@ -55,6 +62,9 @@ documents.get('/:id/file', documentController.download);
 documents.put('/:id', validate(validateDocumentDetails), documentController.update);
 documents.delete('/:id', documentController.remove);
 router.use('/documents', documents);
+
+// The whole history as one dated list: visits (with what came out of them) and standalone records.
+router.get('/timeline', timelineController.get);
 
 // Dashboard counts for every record type (see models/index.js).
 router.get('/summary', summaryController.getSummary);

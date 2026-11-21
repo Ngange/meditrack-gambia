@@ -5,6 +5,7 @@ export type LabResult = {
   result: string | null;
   reference_range: string | null;
   facility_name: string | null;
+  visit_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -15,6 +16,7 @@ export type LabPanelRow = { testName: string; result?: string; referenceRange?: 
 export type LabPanelInput = {
   testDate: string;
   facilityName?: string;
+  visitId?: string | null;
   results: LabPanelRow[];
 };
 
@@ -24,4 +26,5 @@ export type LabResultInput = {
   result?: string;
   referenceRange?: string;
   facilityName?: string;
+  visitId?: string | null;
 };

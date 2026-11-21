@@ -14,6 +14,15 @@ export type DocumentErrors = { file?: string; fileName?: string; documentDate?: 
 
 const extensionOf = (name: string) => (name.includes('.') ? name.split('.').pop()!.toLowerCase() : '');
 
+/** A message if this file cannot be uploaded (wrong kind or too big), otherwise undefined. */
+export function fileProblem(file: PickedFile): string | undefined {
+  if (!(ALLOWED_EXTENSIONS as readonly string[]).includes(extensionOf(file.name))) {
+    return 'Only PDF and image files (JPG, PNG, WebP, HEIC) can be uploaded.';
+  }
+  if (file.size !== undefined && file.size > MAX_FILE_BYTES) return 'That file is too large. The limit is 10 MB.';
+  return undefined;
+}
+
 export function validateDocument(v: DocumentValues, isEdit: boolean): Validation<DocumentInput, DocumentErrors> {
   const errors: DocumentErrors = {};
 
@@ -21,10 +30,8 @@ export function validateDocument(v: DocumentValues, isEdit: boolean): Validation
     if (!v.fileName.trim()) errors.fileName = 'The file name cannot be empty.';
   } else if (!v.file) {
     errors.file = 'Choose a file or take a photo.';
-  } else if (!(ALLOWED_EXTENSIONS as readonly string[]).includes(extensionOf(v.file.name))) {
-    errors.file = 'Only PDF and image files (JPG, PNG, WebP, HEIC) can be uploaded.';
-  } else if (v.file.size !== undefined && v.file.size > MAX_FILE_BYTES) {
-    errors.file = 'That file is too large. The limit is 10 MB.';
+  } else {
+    errors.file = fileProblem(v.file);
   }
 
   const date = v.documentDate.trim();

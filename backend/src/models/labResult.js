@@ -5,12 +5,13 @@ const { normalize } = require('../utils/text');
 // VARCHAR in the schema, like visits). test_date is returned as text.
 module.exports = {
   name: 'lab_result',
+  linksToVisit: true,
   plural: 'lab_results',
   label: 'Lab result',
   table: 'laboratory_results',
   idCol: 'result_id',
   selectColumns: `result_id, test_name_enc, test_date::text AS test_date, result_enc,
-  reference_range_enc, facility_name, created_at, updated_at`,
+  reference_range_enc, facility_name, visit_id, created_at, updated_at`,
   orderBy: 'test_date DESC, created_at DESC',
 
   fields: {
@@ -19,6 +20,7 @@ module.exports = {
     result_enc: (v) => encrypt(v.result),
     reference_range_enc: (v) => encrypt(v.referenceRange),
     facility_name: (v) => v.facility,
+    visit_id: (v) => v.visitId,
   },
 
   // The same test (ignoring case and spacing) on the same day is the same result.
@@ -40,6 +42,7 @@ module.exports = {
       result: decrypt(row.result_enc),
       reference_range: decrypt(row.reference_range_enc),
       facility_name: row.facility_name,
+      visit_id: row.visit_id,
       created_at: row.created_at,
       updated_at: row.updated_at,
     };

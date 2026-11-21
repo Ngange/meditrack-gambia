@@ -4,6 +4,7 @@ import { SelectField } from '../../components/forms/SelectField';
 import { TextField } from '../../components/forms/TextField';
 import { RecordForm } from '../../components/records/RecordForm';
 import type { RecordFormProps } from '../../components/records/types';
+import { VisitPicker } from '../visits/VisitPicker';
 import { useFormState } from '../../hooks/useFormState';
 import type { Condition, ConditionInput, ConditionStatus } from '../../types/records';
 import { today } from '../../utils/dates';
@@ -19,12 +20,14 @@ export function ConditionForm({ initial, saving, error, onSubmit, onCancel }: Re
     notes: initial?.notes ?? '',
   });
   const [localError, setLocalError] = useState('');
+  const [visitId, setVisitId] = useState<string | null>(initial?.visit_id ?? null);
 
   function submit() {
     const problem = validateCondition(values);
     setLocalError(problem ?? '');
     if (problem) return;
     onSubmit({
+      visitId,
       conditionName: values.name.trim(),
       diagnosisDate: values.date,
       status: values.status as ConditionStatus,
@@ -46,6 +49,7 @@ export function ConditionForm({ initial, saving, error, onSubmit, onCancel }: Re
         <SelectField label="Status" options={STATUSES} {...bind('status')} />
       </FormRow>
       <TextField label="Notes (optional)" placeholder="e.g. Managed with diet and medication" maxLength={2000} {...bind('notes')} />
+      <VisitPicker value={visitId} onChange={setVisitId} />
     </RecordForm>
   );
 }

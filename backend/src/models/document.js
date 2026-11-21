@@ -10,7 +10,7 @@ module.exports = {
   label: 'Document',
   table: 'medical_documents',
   idCol: 'document_id',
-  selectColumns: `document_id, document_type, file_name, file_path_enc, description_enc, document_date::text AS document_date, upload_date, created_at`,
+  selectColumns: `document_id, document_type, file_name, file_path_enc, description_enc, document_date::text AS document_date, visit_id, upload_date, created_at`,
   // Newest first by the date on the document itself (falling back to the day it was uploaded).
   orderBy: 'COALESCE(document_date, upload_date::date) DESC, upload_date DESC',
 
@@ -22,6 +22,7 @@ module.exports = {
       file_name: row.file_name,
       description: decrypt(row.description_enc),
       document_date: row.document_date,
+      visit_id: row.visit_id,
       upload_date: row.upload_date,
     };
   },

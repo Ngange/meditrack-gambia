@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const AppError = require('../utils/AppError');
 const { withPatientLock } = require('./patientService');
+const { assertVisitOwned } = require('./visitLink');
 
 // Builds list / create / update / remove for any record type from its model.
 // Table and column names come from the model files (constants in our code),
@@ -39,21 +40,25 @@ function createRecordService(model) {
     return result.rows.map(model.toDto);
   }
 
+  // Inserts one record inside a transaction the caller already holds (with the patient lock).
+  // create() uses it, and so does saving a visit together with its records.
+  async function insertIn(client, patientId, value) {
+    if (model.linksToVisit) await assertVisitOwned(client, patientId, value.visitId);
+    if (await isDuplicate(client, patientId, value, null)) {
+      throw new AppError(409, duplicate.message);
+    }
+    const placeholders = columns.map((_, i) => `$${i + 2}`).join(', ');
+    const result = await client.query(
+      `INSERT INTO ${table} (patient_id, ${columns.join(', ')})
+       VALUES ($1, ${placeholders})
+       RETURNING ${selectColumns}`,
+      [patientId, ...columns.map((c) => fields[c](value))],
+    );
+    return model.toDto(result.rows[0]);
+  }
+
   async function create(patientId, value) {
-    const row = await withPatientLock(patientId, async (client) => {
-      if (await isDuplicate(client, patientId, value, null)) {
-        throw new AppError(409, duplicate.message);
-      }
-      const placeholders = columns.map((_, i) => `$${i + 2}`).join(', ');
-      const result = await client.query(
-        `INSERT INTO ${table} (patient_id, ${columns.join(', ')})
-         VALUES ($1, ${placeholders})
-         RETURNING ${selectColumns}`,
-        [patientId, ...columns.map((c) => fields[c](value))],
-      );
-      return result.rows[0];
-    });
-    return model.toDto(row);
+    return withPatientLock(patientId, (client) => insertIn(client, patientId, value));
   }
 
   // Saves several records in one go (for example every result of one blood panel).
@@ -68,26 +73,22 @@ function createRecordService(model) {
           throw new AppError(409, `Row ${i + 1}: this ${model.label.toLowerCase()} is listed twice.`);
         }
         seen.add(scope);
-        if (await isDuplicate(client, patientId, value, null)) {
-          throw new AppError(409, `Row ${i + 1}: ${duplicate.message}`);
+        try {
+          saved.push(await insertIn(client, patientId, value));
+        } catch (err) {
+          if (err instanceof AppError && err.status === 409) throw new AppError(409, `Row ${i + 1}: ${err.message}`);
+          throw err;
         }
-        const placeholders = columns.map((_, k) => `$${k + 2}`).join(', ');
-        const result = await client.query(
-          `INSERT INTO ${table} (patient_id, ${columns.join(', ')})
-           VALUES ($1, ${placeholders})
-           RETURNING ${selectColumns}`,
-          [patientId, ...columns.map((c) => fields[c](value))],
-        );
-        saved.push(result.rows[0]);
       }
       return saved;
     });
-    return rows.map(model.toDto);
+    return rows;
   }
 
   async function update(patientId, id, value) {
     try {
       const row = await withPatientLock(patientId, async (client) => {
+        if (model.linksToVisit) await assertVisitOwned(client, patientId, value.visitId);
         if (await isDuplicate(client, patientId, value, id)) {
           throw new AppError(409, duplicate.message);
         }
@@ -121,7 +122,7 @@ function createRecordService(model) {
     }
   }
 
-  return { list, create, createMany, update, remove };
+  return { list, create, createMany, insertIn, update, remove };
 }
 
 module.exports = createRecordService;

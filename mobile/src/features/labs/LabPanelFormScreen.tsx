@@ -13,6 +13,7 @@ import { DangerLink } from '@/components/ui/danger-link';
 import { FormError } from '@/components/ui/form-error';
 import { Input } from '@/components/ui/input';
 import { Spacing } from '@/constants/theme';
+import { VisitPicker } from '@/features/visits/VisitPicker';
 import { todayLocal } from '@/utils/dates';
 
 import { labResultApi } from './api';
@@ -25,6 +26,7 @@ const newRow = (): PanelRowValues => ({ id: nextId++, testName: '', result: '', 
 export function LabPanelFormScreen() {
   const [testDate, setTestDate] = useState(todayLocal());
   const [facility, setFacility] = useState('');
+  const [visitId, setVisitId] = useState<string | null>(null);
   const [rows, setRows] = useState<PanelRowValues[]>(() => [newRow(), newRow(), newRow()]);
   const [errors, setErrors] = useState<PanelErrors>({ rows: {} });
   const [formError, setFormError] = useState('');
@@ -43,7 +45,7 @@ export function LabPanelFormScreen() {
 
     setSaving(true);
     try {
-      await labResultApi.createMany(result.input);
+      await labResultApi.createMany({ ...result.input, visitId });
       router.back();
     } catch (err) {
       if (!isAuthError(err)) setFormError(errorMessage(err));
@@ -74,6 +76,8 @@ export function LabPanelFormScreen() {
         value={facility}
         onChangeText={setFacility}
       />
+
+      <VisitPicker value={visitId} onChange={setVisitId} />
 
       {rows.map((row, i) => (
         <Card key={row.id} style={styles.row}>

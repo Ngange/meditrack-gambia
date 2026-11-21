@@ -3,12 +3,13 @@ const { normalize } = require('../utils/text');
 
 module.exports = {
   name: 'medication',
+  linksToVisit: true,
   plural: 'medications',
   label: 'Medication',
   table: 'medications',
   idCol: 'medication_id',
   selectColumns: `medication_id, medication_name_enc, dosage_enc, frequency_enc,
-  start_date::text AS start_date, end_date::text AS end_date, status, reminder_times, created_at, updated_at`,
+  start_date::text AS start_date, end_date::text AS end_date, status, reminder_times, visit_id, created_at, updated_at`,
   // Active medications first, then newest.
   orderBy: "(status = 'active') DESC, start_date DESC, created_at DESC",
 
@@ -20,6 +21,7 @@ module.exports = {
     end_date: (v) => v.end,
     status: (v) => v.status,
     reminder_times: (v) => v.reminderTimes,
+    visit_id: (v) => v.visitId,
   },
 
   // Same name (ignoring case and spacing) with the same start date is the same medication.
@@ -44,6 +46,7 @@ module.exports = {
       end_date: row.end_date,
       status: row.status,
       reminder_times: row.reminder_times ?? [],
+      visit_id: row.visit_id,
       created_at: row.created_at,
       updated_at: row.updated_at,
     };

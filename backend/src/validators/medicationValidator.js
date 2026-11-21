@@ -1,4 +1,5 @@
 const { clean } = require('../utils/text');
+const { parseVisitId } = require('../utils/ids');
 const { isRealDate, EARLIEST_DATE } = require('../utils/dates');
 
 const STATUSES = ['active', 'completed', 'discontinued'];
@@ -26,6 +27,8 @@ function validateMedication(body) {
   const frequency = clean(body.frequency);
   const start = clean(body.startDate);
   const end = clean(body.endDate);
+  const visit = parseVisitId(body.visitId);
+  if (visit.error) return { error: visit.error };
 
   if (!name) return { error: 'Medication name is required.' };
   if (name.length > 200)
@@ -60,6 +63,7 @@ function validateMedication(body) {
       end: end || null,
       status: body.status || 'active',
       reminderTimes: reminders.times,
+      visitId: visit.value,
     },
   };
 }

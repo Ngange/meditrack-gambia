@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { errorMessage, isAuthError } from '../../api/client';
 import { labResultsApi } from '../../api/labResults';
 import { today } from '../../utils/dates';
+import { VisitPicker } from '../visits/VisitPicker';
 import { MAX_PANEL_ROWS, validatePanel, type PanelRow } from './panelValidation';
 
 let nextId = 1;
@@ -13,6 +14,7 @@ type Props = { onSaved: () => void; onCancel: () => void };
 export function LabPanelForm({ onSaved, onCancel }: Props) {
   const [testDate, setTestDate] = useState(today());
   const [facility, setFacility] = useState('');
+  const [visitId, setVisitId] = useState<string | null>(null);
   const [rows, setRows] = useState<PanelRow[]>(() => [newRow(), newRow(), newRow()]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -28,7 +30,7 @@ export function LabPanelForm({ onSaved, onCancel }: Props) {
 
     setSaving(true);
     try {
-      await labResultsApi.createMany(input);
+      await labResultsApi.createMany({ ...input, visitId });
       onSaved();
     } catch (err) {
       if (!isAuthError(err)) setError(errorMessage(err));
@@ -52,6 +54,8 @@ export function LabPanelForm({ onSaved, onCancel }: Props) {
           <input value={facility} maxLength={200} placeholder="e.g. EFSTH Laboratory" onChange={(e) => setFacility(e.target.value)} />
         </label>
       </div>
+
+      <VisitPicker value={visitId} onChange={setVisitId} />
 
       {rows.map((row, i) => (
         <div key={row.id} className="a-row lab-panel-row">

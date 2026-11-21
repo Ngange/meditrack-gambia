@@ -4,6 +4,7 @@ import { SelectField } from '../../components/forms/SelectField';
 import { TextField } from '../../components/forms/TextField';
 import { RecordForm } from '../../components/records/RecordForm';
 import type { RecordFormProps } from '../../components/records/types';
+import { VisitPicker } from '../visits/VisitPicker';
 import { useFormState } from '../../hooks/useFormState';
 import type { Medication, MedicationInput, MedicationStatus } from '../../types/records';
 import { today } from '../../utils/dates';
@@ -22,12 +23,14 @@ export function MedicationForm({ initial, saving, error, onSubmit, onCancel }: R
     reminders: (initial?.reminder_times ?? []).join(', '),
   });
   const [localError, setLocalError] = useState('');
+  const [visitId, setVisitId] = useState<string | null>(initial?.visit_id ?? null);
 
   function submit() {
     const problem = validateMedication(values);
     setLocalError(problem ?? '');
     if (problem) return;
     onSubmit({
+      visitId,
       medicationName: values.name.trim(),
       dosage: values.dosage.trim(),
       frequency: values.frequency.trim(),
@@ -62,6 +65,7 @@ export function MedicationForm({ initial, saving, error, onSubmit, onCancel }: R
         maxLength={60}
         {...bind('reminders')}
       />
+      <VisitPicker value={visitId} onChange={setVisitId} />
     </RecordForm>
   );
 }

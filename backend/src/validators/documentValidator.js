@@ -1,5 +1,6 @@
 const { clean } = require('../utils/text');
 const { sanitizeFileName } = require('../utils/files');
+const { parseVisitId } = require('../utils/ids');
 const { isRealDate, today, EARLIEST_DATE } = require('../utils/dates');
 
 const TYPES = ['prescription', 'lab_report', 'discharge_summary', 'medical_certificate', 'other'];
@@ -10,6 +11,8 @@ function validateDocumentDetails(body) {
   const description = clean(body.description);
   const rawName = clean(body.fileName);
   const documentDate = clean(body.documentDate);
+  const visit = parseVisitId(body.visitId);
+  if (visit.error) return { error: visit.error };
 
   if (!TYPES.includes(documentType)) {
     return { error: 'Document type must be prescription, lab report, discharge summary, medical certificate or other.' };
@@ -29,7 +32,7 @@ function validateDocumentDetails(body) {
     if (!fileName) return { error: 'That file name is not valid.' };
   }
 
-  return { value: { documentType, description: description || null, documentDate: documentDate || null, fileName } };
+  return { value: { documentType, description: description || null, documentDate: documentDate || null, visitId: visit.value, fileName } };
 }
 
 module.exports = { validateDocumentDetails, TYPES };

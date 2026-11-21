@@ -23,6 +23,7 @@ export type MedicalDocument = {
   description: string | null;
   /** The date on the document itself (YYYY-MM-DD); null for older uploads. */
   document_date: string | null;
+  visit_id: string | null;
   upload_date: string;
 };
 
@@ -40,6 +41,7 @@ export type DocumentInput = {
   documentType: DocumentType;
   description?: string;
   documentDate?: string;
+  visitId?: string | null;
   /** Editing: the shown file name. */
   fileName?: string;
   /** Adding: the file to upload. */

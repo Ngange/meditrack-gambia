@@ -10,6 +10,7 @@ import { ChipGroup } from '@/components/ui/chip-group';
 import { FormError } from '@/components/ui/form-error';
 import { Input } from '@/components/ui/input';
 import { Spacing } from '@/constants/theme';
+import { VisitPicker } from '@/features/visits/VisitPicker';
 import { useFormState } from '@/hooks/useFormState';
 import { useRecordForm } from '@/hooks/useRecordForm';
 import { useRouteItem } from '@/hooks/useRouteItem';
@@ -32,6 +33,7 @@ export function DocumentFormScreen() {
   });
   const [file, setFile] = useState<PickedFile | null>(null);
   const [errors, setErrors] = useState<DocumentErrors>({});
+  const [visitId, setVisitId] = useState<string | null>(doc?.visit_id ?? null);
   const [pickError, setPickError] = useState('');
 
   async function choose(pick: () => Promise<PickedFile | null>) {
@@ -50,7 +52,7 @@ export function DocumentFormScreen() {
   function handleSave() {
     const result = validateDocument({ ...values, file }, form.isEdit);
     setErrors(result.errors);
-    if (result.input) void form.submit(result.input);
+    if (result.input) void form.submit({ ...result.input, visitId });
   }
 
   return (
@@ -93,6 +95,7 @@ export function DocumentFormScreen() {
         {...bind('documentDate')}
       />
       <Input label="Note (optional)" placeholder="e.g. Malaria treatment, May 2026" {...bind('description')} />
+      <VisitPicker value={visitId} onChange={setVisitId} />
     </RecordFormScreen>
   );
 }

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { RecordFormScreen } from '@/components/records/RecordFormScreen';
 import { ChipGroup } from '@/components/ui/chip-group';
 import { Input } from '@/components/ui/input';
+import { VisitPicker } from '@/features/visits/VisitPicker';
 import { useFormState } from '@/hooks/useFormState';
 import { useRecordForm } from '@/hooks/useRecordForm';
 import { useRouteItem } from '@/hooks/useRouteItem';
@@ -26,11 +27,12 @@ export function MedicationFormScreen() {
     reminders: medication?.reminder_times ?? [],
   });
   const [errors, setErrors] = useState<MedicationErrors>({});
+  const [visitId, setVisitId] = useState<string | null>(medication?.visit_id ?? null);
 
   function handleSave() {
     const result = validateMedication(values);
     setErrors(result.errors);
-    if (result.input) void form.submit(result.input);
+    if (result.input) void form.submit({ ...result.input, visitId });
   }
 
   return (
@@ -65,6 +67,7 @@ export function MedicationFormScreen() {
         onChange={(v) => v && set('status', v)}
       />
       <ReminderTimesField value={values.reminders} onChange={(times) => set('reminders', times)} />
+      <VisitPicker value={visitId} onChange={setVisitId} />
     </RecordFormScreen>
   );
 }

@@ -6,12 +6,13 @@ import { getToken } from '../utils/token-storage';
 const API_URL = import.meta.env.VITE_API_URL;
 const base = createRecordApi<MedicalDocument, DocumentInput>('documents', 'document');
 
-function toForm({ file, documentType, description, documentDate, fileName }: DocumentInput) {
+function toForm({ file, documentType, description, documentDate, visitId, fileName }: DocumentInput) {
   const form = new FormData();
   if (file) form.append('file', file, file.name);
   form.append('documentType', documentType);
   if (description) form.append('description', description);
   if (documentDate) form.append('documentDate', documentDate);
+  if (visitId) form.append('visitId', visitId);
   if (fileName) form.append('fileName', fileName);
   return form;
 }
@@ -26,10 +27,10 @@ export const documentsApi = {
   },
 
   /** Edits the details only. The file itself never changes. */
-  async update(id: string, { documentType, description, documentDate, fileName }: DocumentInput) {
+  async update(id: string, { documentType, description, documentDate, visitId, fileName }: DocumentInput) {
     const data = await request<{ document: MedicalDocument }>(`/records/documents/${id}`, {
       method: 'PUT',
-      body: { documentType, description, documentDate, fileName },
+      body: { documentType, description, documentDate, visitId, fileName },
     });
     return data.document;
   },

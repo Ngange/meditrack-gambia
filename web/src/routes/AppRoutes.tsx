@@ -9,6 +9,7 @@ import { LabResultsPage } from '../features/labs/LabResultsPage';
 import { DocumentsPage } from '../features/documents/DocumentsPage';
 import { MedicationsPage } from '../features/medications/MedicationsPage';
 import { ProfilePage } from '../features/profile/ProfilePage';
+import { TimelinePage } from '../features/timeline/TimelinePage';
 import { VisitsPage } from '../features/visits/VisitsPage';
 import { useAuth } from '../hooks/useAuth';
 
@@ -29,6 +30,7 @@ export function AppRoutes() {
         <Route path="/medications" element={<MedicationsPage />} />
         <Route path="/lab-results" element={<LabResultsPage />} />
         <Route path="/documents" element={<DocumentsPage />} />
+        <Route path="/timeline" element={<TimelinePage />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>
 
