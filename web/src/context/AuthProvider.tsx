@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { login, register } from '../api/auth';
+import { login, register, registerProvider } from '../api/auth';
 import { setUnauthorizedHandler } from '../api/client';
 import type { AuthUser, Role } from '../types/auth';
 import { clearToken, getToken, saveToken } from '../utils/token-storage';
@@ -49,6 +49,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       async signUp(email, password, firstName, lastName) {
         const result = await register(email, password, firstName, lastName);
+        saveToken(result.token);
+        setUser(result.user);
+      },
+      async signUpProvider(input) {
+        const result = await registerProvider(input);
         saveToken(result.token);
         setUser(result.user);
       },

@@ -1,8 +1,11 @@
 const { encrypt, decrypt } = require('../services/encryption');
 const { normalize } = require('../utils/text');
 
-// facility_name is stored as plain text (a plain VARCHAR in the schema);
-// reason, diagnosis, treatment and notes are encrypted. visit_date is returned as text.
+// The clinic name, reason, diagnosis, treatment and notes are encrypted. visit_date is returned as text.
+// facility_name (the old plain column) is only read for rows saved before encryption was added and
+// is emptied on every write; `scripts/encrypt-facility-names.js` moves those old rows across.
+const facilityOf = (row) => (row.facility_name_enc ? decrypt(row.facility_name_enc) : row.facility_name);
+
 const key = (facility, reason) =>
   `${normalize(facility || '')}|${normalize(reason || '')}`;
 
@@ -12,12 +15,13 @@ module.exports = {
   label: 'Visit',
   table: 'medical_visits',
   idCol: 'visit_id',
-  selectColumns: `visit_id, facility_name, visit_date::text AS visit_date,
+  selectColumns: `visit_id, facility_name, facility_name_enc, visit_date::text AS visit_date,
   reason_enc, diagnosis_enc, treatment_enc, notes_enc, created_at, updated_at`,
   orderBy: 'visit_date DESC, created_at DESC',
 
   fields: {
-    facility_name: (v) => v.facility,
+    facility_name: () => null,
+    facility_name_enc: (v) => encrypt(v.facility),
     visit_date: (v) => v.date,
     reason_enc: (v) => encrypt(v.reason),
     diagnosis_enc: (v) => encrypt(v.diagnosis),
@@ -28,10 +32,10 @@ module.exports = {
   // Same date + facility + reason (ignoring case and spacing) is the same visit.
   // Two different visits on one day are fine: they differ in facility or reason.
   duplicate: {
-    columns: 'facility_name, reason_enc',
+    columns: 'facility_name, facility_name_enc, reason_enc',
     where: 'AND visit_date = $2',
     params: (v) => [v.date],
-    keyOfRow: (r) => key(r.facility_name, decrypt(r.reason_enc)),
+    keyOfRow: (r) => key(facilityOf(r), decrypt(r.reason_enc)),
     keyOfValue: (v) => key(v.facility, v.reason),
     message:
       'A visit with the same date, facility and reason is already in your records. Edit the existing entry instead.',
@@ -40,7 +44,7 @@ module.exports = {
   toDto(row) {
     return {
       visit_id: row.visit_id,
-      facility_name: row.facility_name,
+      facility_name: facilityOf(row),
       visit_date: row.visit_date,
       reason: decrypt(row.reason_enc),
       diagnosis: decrypt(row.diagnosis_enc),

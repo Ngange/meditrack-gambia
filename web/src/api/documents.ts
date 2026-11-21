@@ -1,6 +1,7 @@
 import type { DocumentInput, MedicalDocument } from '../types/records';
 import { ApiError, notifyUnauthorized, request } from './client';
 import { createRecordApi } from './records';
+import { getRecordsBase } from './recordsScope';
 import { getToken } from '../utils/token-storage';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -44,7 +45,7 @@ export const documentsApi = {
     }
     let res: Response;
     try {
-      res = await fetch(`${API_URL}/records/documents/${doc.document_id}/file`, { headers: { Authorization: `Bearer ${token}` } });
+      res = await fetch(`${API_URL}${getRecordsBase()}/documents/${doc.document_id}/file`, { headers: { Authorization: `Bearer ${token}` } });
     } catch {
       throw new ApiError('Could not reach the server. Check your connection and try again.', 0);
     }

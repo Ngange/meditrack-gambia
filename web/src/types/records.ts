@@ -6,6 +6,7 @@ export type AllergyStatus = 'active' | 'resolved';
 
 export type Allergy = {
   allergy_id: string;
+  entered_by?: EnteredBy | null;
   allergen: string;
   reaction: string | null;
   severity: Severity | null;
@@ -25,6 +26,7 @@ export type ConditionStatus = 'active' | 'resolved' | 'chronic';
 
 export type Condition = {
   condition_id: string;
+  entered_by?: EnteredBy | null;
   condition_name: string;
   diagnosis_date: string | null;
   status: ConditionStatus;
@@ -44,6 +46,7 @@ export type ConditionInput = {
 
 export type Visit = {
   visit_id: string;
+  entered_by?: EnteredBy | null;
   facility_name: string | null;
   visit_date: string;
   reason: string | null;
@@ -67,6 +70,7 @@ export type MedicationStatus = 'active' | 'completed' | 'discontinued';
 
 export type Medication = {
   medication_id: string;
+  entered_by?: EnteredBy | null;
   medication_name: string;
   dosage: string | null;
   frequency: string | null;
@@ -92,6 +96,7 @@ export type MedicationInput = {
 
 export type LabResult = {
   result_id: string;
+  entered_by?: EnteredBy | null;
   test_name: string;
   test_date: string;
   result: string | null;
@@ -177,3 +182,74 @@ export type LinkedRecords = {
   lab_results: LabResult[];
   documents: MedicalDocument[];
 };
+
+// ---- Sharing -------------------------------------------------------------------------------
+
+// The sections a link can include. Name and blood group are always shown, so they are not listed.
+export type ShareSection = 'allergies' | 'conditions' | 'visits' | 'medications' | 'lab_results' | 'documents' | 'emergency_contact';
+export type ShareDuration = '1h' | '24h' | '7d';
+export type ShareStatus = 'active' | 'expired' | 'revoked';
+
+export type Share = {
+  share_id: string;
+  record_types: ShareSection[];
+  granted_at: string;
+  expires_at: string;
+  revoked_at: string | null;
+  status: ShareStatus;
+  view_count: number;
+  last_viewed_at: string | null;
+};
+
+// The reply to making a link. The address (and its secret) is shown once and never stored.
+export type CreatedShare = { share: Share; token: string; url: string };
+
+export type ShareInput = { recordTypes: ShareSection[]; duration: ShareDuration };
+
+// What the person holding a link sees.
+export type SharedView = {
+  patient: {
+    first_name: string;
+    last_name: string;
+    blood_group: string | null;
+    emergency_contact_name?: string | null;
+    emergency_contact_phone?: string | null;
+  };
+  expires_at: string;
+  record_types: ShareSection[];
+  sections: {
+    allergies?: Allergy[];
+    conditions?: Condition[];
+    visits?: Visit[];
+    medications?: Medication[];
+    lab_results?: LabResult[];
+    documents?: MedicalDocument[];
+  };
+};
+
+// ---- Doctor access (the patient's code and PIN) -----------------------------------------------
+
+export type Access = {
+  patient_code: string;
+  has_pin: boolean;
+  pin_set_at: string | null;
+  /** Set while doctor access is locked after too many wrong PINs. */
+  locked_until: string | null;
+};
+
+// ---- Who has seen the record -------------------------------------------------------------------
+
+export type ActiveAccess = { session_id: string; doctor: string; facility: string | null; started_at: string; expires_at: string };
+export type AccessEvent = {
+  id: string;
+  type: 'doctor_session' | 'wrong_pin' | 'share_link';
+  at: string;
+  title: string;
+  detail: string | null;
+};
+export type AccessHistory = { active: ActiveAccess[]; history: AccessEvent[] };
+
+// ---- Who wrote a record ------------------------------------------------------------------------
+
+/** Set when a doctor entered the record; null or missing when the patient did. */
+export type EnteredBy = { provider_id: string; name: string; facility: string | null };

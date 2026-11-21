@@ -1,0 +1,22 @@
+.sh-page { display: grid; gap: 20px; max-width: 760px; }
+.sh-page h1, .sh-page h2 { margin: 0 0 4px; }
+.sh-form, .sh-created { display: grid; gap: 12px; }
+.sh-chips { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.sh-chips legend { font-weight: 600; margin-bottom: 8px; padding: 0; }
+.sh-chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--a-border); border-radius: 999px; cursor: pointer; user-select: none; }
+.sh-chip.on { background: var(--a-primary); color: var(--a-on-primary); border-color: transparent; }
+.sh-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.sh-chip:focus-within { outline: 2px solid var(--a-primary); outline-offset: 2px; }
+.sh-url { width: 100%; padding: 10px; font-family: monospace; font-size: 0.85rem; border: 1px solid var(--a-border); border-radius: 8px; box-sizing: border-box; }
+.sh-access { display: grid; gap: 12px; }
+.sh-access p { margin: 0; }
+.sh-code { font-family: monospace; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.04em; }
+.sh-pin-form { gap: 12px; }
+
+/* Who has seen my record */
+.sh-hist h2 { margin-bottom: 0.25rem; }
+.sh-hist-list { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.6rem; }
+.sh-hist-item { border-top: 1px solid var(--a-border); padding-top: 0.6rem; }
+.sh-hist-item:first-child { border-top: 0; padding-top: 0; }
+.sh-hist-item.warn strong::before { content: '⚠ '; }
+.sh-hist-live { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; }

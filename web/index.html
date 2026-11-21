@@ -7,6 +7,14 @@
     <title>web</title>
   </head>
   <body>
+    <script>
+      // Set the colour theme before the page paints, so there is no flash. Dark is the default.
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem('meditrack-theme') === 'light' ? 'light' : 'dark';
+      } catch {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

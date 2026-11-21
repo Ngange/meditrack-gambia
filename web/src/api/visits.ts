@@ -1,6 +1,7 @@
 import type { LinkedRecords, Visit, VisitBundleInput, VisitBundleResult, VisitInput } from '../types/records';
 import { request } from './client';
 import { createRecordApi } from './records';
+import { getRecordsBase } from './recordsScope';
 
 const base = createRecordApi<Visit, VisitInput>('visits', 'visit');
 
@@ -9,11 +10,11 @@ export const visitsApi = {
 
   /** Saves the visit and its diagnoses, prescriptions and tests together: all of them, or none. */
   createWithRecords(bundle: VisitBundleInput) {
-    return request<VisitBundleResult>('/records/visits/with-records', { method: 'POST', body: bundle });
+    return request<VisitBundleResult>(`${getRecordsBase()}/visits/with-records`, { method: 'POST', body: bundle });
   },
 
   /** What came out of this visit. */
   linked(id: string) {
-    return request<LinkedRecords>(`/records/visits/${id}/linked`);
+    return request<LinkedRecords>(`${getRecordsBase()}/visits/${id}/linked`);
   },
 };

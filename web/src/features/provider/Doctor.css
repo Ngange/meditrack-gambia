@@ -1,0 +1,18 @@
+.dr-page { max-width: 720px; }
+.dr-card { display: grid; gap: 14px; }
+.dr-card h2 { margin: 0; }
+.dr-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.dr-details { display: grid; grid-template-columns: max-content 1fr; gap: 6px 20px; margin: 0; }
+.dr-details dt { color: var(--a-muted); }
+.dr-details dd { margin: 0; font-weight: 600; }
+.dr-sessions { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
+.dr-session { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 18px; }
+.dr-banner { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+.dr-banner h1 { margin: 0 0 6px; }
+.dr-timer { display: grid; gap: 6px; justify-items: end; }
+.dr-clock { font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.dr-patient { display: grid; gap: 16px; }
+.dr-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.dr-tab { font: inherit; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--a-border); background: var(--a-surface); color: var(--a-text); cursor: pointer; }
+.dr-tab.is-on { background: var(--a-primary); color: var(--a-on-primary); border-color: transparent; font-weight: 600; }
+.dr-page { max-width: 760px; display: grid; gap: 18px; }

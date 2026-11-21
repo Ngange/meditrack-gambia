@@ -8,8 +8,15 @@ const register = asyncHandler(
   },
 );
 
+const registerProvider = asyncHandler(
+  'Registration failed. Please try again.',
+  async (req, res) => {
+    res.status(201).json(await authService.registerProvider(req.valid));
+  },
+);
+
 const login = asyncHandler('Login failed. Please try again.', async (req, res) => {
   res.json(await authService.login(req.valid));
 });
 
-module.exports = { register, login };
+module.exports = { register, registerProvider, login };

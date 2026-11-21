@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { ThemeToggle } from '../ui/ThemeToggle';
 import { IconLogout } from './icons';
 import { NAV } from './nav';
 
@@ -29,6 +30,7 @@ export function Sidebar({ open, onNavigate, onSignOut }: SidebarProps) {
         )}
       </nav>
       <div className="sb-foot">
+        <ThemeToggle className="sb-link sb-theme" />
         <button type="button" className="sb-link sb-signout" onClick={onSignOut}>
           <IconLogout />
           <span>Sign out</span>

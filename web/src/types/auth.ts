@@ -1,4 +1,4 @@
-export type Role = 'patient' | 'admin';
+export type Role = 'patient' | 'admin' | 'provider';
 
 export type AuthUser = {
   userId: string;

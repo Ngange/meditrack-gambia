@@ -1,8 +1,11 @@
 const { encrypt, decrypt } = require('../services/encryption');
 const { normalize } = require('../utils/text');
 
-// test_name, result and reference_range are encrypted. facility_name is plain text (a plain
-// VARCHAR in the schema, like visits). test_date is returned as text.
+// test_name, result, reference_range and the clinic name are encrypted. facility_name (the old
+// plain column) is only read for rows saved before encryption was added and is emptied on every
+// write, as for visits. test_date is returned as text.
+const facilityOf = (row) => (row.facility_name_enc ? decrypt(row.facility_name_enc) : row.facility_name);
+
 module.exports = {
   name: 'lab_result',
   linksToVisit: true,
@@ -11,7 +14,7 @@ module.exports = {
   table: 'laboratory_results',
   idCol: 'result_id',
   selectColumns: `result_id, test_name_enc, test_date::text AS test_date, result_enc,
-  reference_range_enc, facility_name, visit_id, created_at, updated_at`,
+  reference_range_enc, facility_name, facility_name_enc, visit_id, created_at, updated_at`,
   orderBy: 'test_date DESC, created_at DESC',
 
   fields: {
@@ -19,7 +22,8 @@ module.exports = {
     test_date: (v) => v.testDate,
     result_enc: (v) => encrypt(v.result),
     reference_range_enc: (v) => encrypt(v.referenceRange),
-    facility_name: (v) => v.facility,
+    facility_name: () => null,
+    facility_name_enc: (v) => encrypt(v.facility),
     visit_id: (v) => v.visitId,
   },
 
@@ -41,7 +45,7 @@ module.exports = {
       test_date: row.test_date,
       result: decrypt(row.result_enc),
       reference_range: decrypt(row.reference_range_enc),
-      facility_name: row.facility_name,
+      facility_name: facilityOf(row),
       visit_id: row.visit_id,
       created_at: row.created_at,
       updated_at: row.updated_at,

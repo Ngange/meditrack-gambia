@@ -1,6 +1,6 @@
 import { request } from './client';
 
-export type AuthUser = { userId: string; email: string; role: 'patient' | 'admin' };
+export type AuthUser = { userId: string; email: string; role: 'patient' | 'admin' | 'provider' };
 export type AuthResponse = { token: string; user: AuthUser };
 
 export const login = (email: string, password: string) =>

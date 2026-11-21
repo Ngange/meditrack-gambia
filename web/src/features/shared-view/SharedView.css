@@ -1,0 +1,59 @@
+/* The public page sits outside the app shell, so it carries its own copy of the palette. */
+.sv-page {
+  --a-bg: #f6f8fc;
+  --a-surface: #ffffff;
+  --a-subtle: #f6f7f9;
+  --a-text: #111827;
+  --a-muted: #5b6475;
+  --a-border: #e3e8f0;
+  --a-primary: #1c5fb5;
+  --a-primary-soft: #e8f0fb;
+  --a-on-primary: #ffffff;
+  --a-dark: #111827;
+  --a-on-dark: #ffffff;
+  --a-error: #c62828;
+  --a-warn: #a24a05;
+  --a-ok: #1b7a3a;
+  --a-ok-soft: #e6f4ea;
+  --a-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  min-height: 100vh;
+  background: var(--a-bg);
+  color: var(--a-text);
+}
+:root[data-theme='dark'] .sv-page {
+  --a-bg: #0b1220;
+  --a-surface: #141d2e;
+  --a-subtle: #1b2638;
+  --a-text: #e8edf5;
+  --a-muted: #9aa8bd;
+  --a-border: #2a374c;
+  --a-primary: #6fb1f2;
+  --a-primary-soft: #1a2c47;
+  --a-on-primary: #0b1220;
+  --a-dark: #e8edf5;
+  --a-on-dark: #0b1220;
+  --a-error: #f28b82;
+  --a-warn: #f0a560;
+  --a-ok: #6fcf8e;
+  --a-ok-soft: #153322;
+  --a-shadow: none;
+  color-scheme: dark;
+}
+.sv-top { display: flex; align-items: center; gap: 12px; padding: 14px 20px; background: var(--a-surface); border-bottom: 1px solid var(--a-border); }
+.sv-logo { width: 40px; height: 40px; object-fit: contain; border-radius: 8px; }
+.sv-main { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; display: grid; gap: 18px; }
+.sv-patient { display: flex; flex-wrap: wrap; gap: 32px; justify-content: space-between; }
+.sv-patient h1 { margin: 0 0 8px; }
+.sv-patient p { margin: 2px 0; }
+.sv-blood { font-size: 1.6rem; font-weight: 700; }
+.sv-expiry { margin: 0; }
+.sv-section h2 { font-size: 1.1rem; margin: 8px 0; }
+.sv-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.sv-card { display: grid; gap: 8px; align-content: start; }
+.sv-unavailable { display: grid; gap: 8px; max-width: 520px; margin: 40px auto; }
+@media print {
+  .sv-noprint { display: none !important; }
+  .sv-page { background: #fff; }
+  .sv-card { break-inside: avoid; }
+}
+.sv-spacer { flex: 1; }

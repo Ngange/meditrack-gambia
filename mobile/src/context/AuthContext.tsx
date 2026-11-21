@@ -53,8 +53,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(result.user);
   }
 
-  const signIn: AuthContextValue['signIn'] = async (email, password) =>
-    startSession(await login(email, password));
+  const signIn: AuthContextValue['signIn'] = async (email, password) => {
+    const result = await login(email, password);
+    // The phone app is for patients. Nothing is saved for anyone else, so no half-signed-in state is left behind.
+    if (result.user.role === 'provider') throw new Error('Doctor accounts use the MediTrack web app. Please log in there.');
+    if (result.user.role !== 'patient') throw new Error('This app is for patients.');
+    return startSession(result);
+  };
 
   const signUp: AuthContextValue['signUp'] = async (email, password, firstName, lastName) =>
     startSession(await register(email, password, firstName, lastName));

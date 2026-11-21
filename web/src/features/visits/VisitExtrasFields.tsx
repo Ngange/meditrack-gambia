@@ -1,3 +1,4 @@
+import { useRecordsScope } from '../../components/records/useRecordsScope';
 import { DOCUMENT_TYPES, DOCUMENT_TYPE_LABELS, type DocumentType } from '../../types/records';
 import { newId, type Extras } from './extras';
 import './VisitExtras.css';
@@ -7,6 +8,8 @@ type Props = { extras: Extras; onChange: (extras: Extras) => void };
 // The "what came out of this visit?" part of the add-visit form.
 export function VisitExtrasFields({ extras, onChange }: Props) {
   const patch = (p: Partial<Extras>) => onChange({ ...extras, ...p });
+  // Doctors cannot upload files for now, so the documents part is not offered to them.
+  const canAttach = useRecordsScope().mode === 'patient';
 
   return (
     <fieldset className="visit-extras">
@@ -89,39 +92,43 @@ export function VisitExtrasFields({ extras, onChange }: Props) {
         </button>
       </div>
 
-      <h3>Documents</h3>
-      {extras.documents.map((d) => (
-        <div key={d.id} className="a-row visit-extra-row">
-          <span className="visit-file" aria-label={`Attached: ${d.file.name}`}>
-            {d.file.name}
-          </span>
-          <label className="a-field">
-            <span>What is {d.file.name}?</span>
-            <select value={d.type} onChange={(e) => patch({ documents: extras.documents.map((x) => (x.id === d.id ? { ...x, type: e.target.value as DocumentType } : x)) })}>
-              {DOCUMENT_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {DOCUMENT_TYPE_LABELS[t]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="button" className="a-btn a-btn-sm a-btn-danger" aria-label={`Remove ${d.file.name}`} onClick={() => patch({ documents: extras.documents.filter((x) => x.id !== d.id) })}>
-            ✕
-          </button>
-        </div>
-      ))}
-      <label className="a-field">
-        <span>Attach a file (PDF or photo, up to 10 MB)</span>
-        <input
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,application/pdf,image/*"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) patch({ documents: [...extras.documents, { id: newId(), file, type: 'other' }] });
-            e.target.value = '';
-          }}
-        />
-      </label>
+      {canAttach && (
+        <>
+        <h3>Documents</h3>
+        {extras.documents.map((d) => (
+          <div key={d.id} className="a-row visit-extra-row">
+            <span className="visit-file" aria-label={`Attached: ${d.file.name}`}>
+              {d.file.name}
+            </span>
+            <label className="a-field">
+              <span>What is {d.file.name}?</span>
+              <select value={d.type} onChange={(e) => patch({ documents: extras.documents.map((x) => (x.id === d.id ? { ...x, type: e.target.value as DocumentType } : x)) })}>
+                {DOCUMENT_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {DOCUMENT_TYPE_LABELS[t]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="button" className="a-btn a-btn-sm a-btn-danger" aria-label={`Remove ${d.file.name}`} onClick={() => patch({ documents: extras.documents.filter((x) => x.id !== d.id) })}>
+              ✕
+            </button>
+          </div>
+        ))}
+        <label className="a-field">
+          <span>Attach a file (PDF or photo, up to 10 MB)</span>
+          <input
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,application/pdf,image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) patch({ documents: [...extras.documents, { id: newId(), file, type: 'other' }] });
+              e.target.value = '';
+            }}
+          />
+        </label>
+        </>
+      )}
     </fieldset>
   );
 }

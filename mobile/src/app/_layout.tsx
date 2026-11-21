@@ -1,12 +1,13 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { Colors } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { AppThemeProvider } from '@/context/ThemeContext';
 import { ReminderSync } from '@/features/medications/ReminderSync';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 import { configureReminders } from '@/services/reminders';
 
@@ -39,7 +40,7 @@ function RootNavigator() {
   );
 }
 
-export default function RootLayout() {
+function ThemedApp() {
   const colorScheme = useColorScheme();
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -48,5 +49,13 @@ export default function RootLayout() {
         <RootNavigator />
       </AuthProvider>
     </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AppThemeProvider>
+      <ThemedApp />
+    </AppThemeProvider>
   );
 }

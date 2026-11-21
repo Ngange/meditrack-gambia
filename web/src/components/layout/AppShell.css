@@ -22,25 +22,24 @@
   color: var(--a-text);
   text-align: left;
 }
-@media (prefers-color-scheme: dark) {
-  .shell {
-    --a-bg: #0b1220;
-    --a-surface: #141d2e;
-    --a-subtle: #1b2638;
-    --a-text: #e8edf5;
-    --a-muted: #9aa8bd;
-    --a-border: #2a374c;
-    --a-primary: #6fb1f2;
-    --a-primary-soft: #1a2c47;
-    --a-on-primary: #0b1220;
-    --a-dark: #e8edf5;
-    --a-on-dark: #0b1220;
-    --a-error: #f28b82;
-    --a-warn: #f0a560;
-    --a-ok: #6fcf8e;
-    --a-ok-soft: #153322;
-    --a-shadow: none;
-  }
+:root[data-theme='dark'] .shell {
+  --a-bg: #0b1220;
+  --a-surface: #141d2e;
+  --a-subtle: #1b2638;
+  --a-text: #e8edf5;
+  --a-muted: #9aa8bd;
+  --a-border: #2a374c;
+  --a-primary: #6fb1f2;
+  --a-primary-soft: #1a2c47;
+  --a-on-primary: #0b1220;
+  --a-dark: #e8edf5;
+  --a-on-dark: #0b1220;
+  --a-error: #f28b82;
+  --a-warn: #f0a560;
+  --a-ok: #6fcf8e;
+  --a-ok-soft: #153322;
+  --a-shadow: none;
+  color-scheme: dark;
 }
 
 /* ---- sidebar ---- */

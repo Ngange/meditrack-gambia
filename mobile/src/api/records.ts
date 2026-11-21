@@ -1,5 +1,8 @@
 import { request } from './client';
 
+/** Set on a record a doctor entered; missing or null when the patient entered it. */
+export type EnteredBy = { provider_id: string; name: string; facility: string | null };
+
 export type RecordApi<T, I> = {
   list: () => Promise<T[]>;
   create: (input: I) => Promise<T>;

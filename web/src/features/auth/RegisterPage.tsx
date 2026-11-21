@@ -72,6 +72,9 @@ export function RegisterPage() {
           <p style={{ textAlign: 'center', marginTop: 16, color: 'var(--color-text-secondary)' }}>
             Already have an account? <Link to="/login" style={{ color: 'var(--color-primary)' }}>Log in</Link>
           </p>
+          <p style={{ textAlign: 'center', marginTop: 4, color: 'var(--color-text-secondary)' }}>
+            Are you a doctor? <Link to="/register/doctor" style={{ color: 'var(--color-primary)' }}>Register here</Link>
+          </p>
         </>
       }
     />

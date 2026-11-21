@@ -1,8 +1,11 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { RecordCrud } from '../../hooks/useRecordCrud';
+import type { EnteredBy } from '../../types/records';
+import { formatDate } from '../../utils/dates';
 import { ErrorCard } from '../ui/ErrorCard';
 import { Loading } from '../ui/Loading';
 import type { RecordFormProps } from './types';
+import { useRecordsScope } from './useRecordsScope';
 
 type RecordPageProps<T, I> = {
   title: string;
@@ -37,6 +40,14 @@ export function RecordPage<T, I>({
   children,
 }: RecordPageProps<T, I>) {
   const { items, loading, error, editing, editingItem } = crud;
+  const scope = useRecordsScope();
+  const doctor = scope.mode === 'doctor';
+
+  // A doctor may edit only what they entered and never delete. A patient may not edit what a doctor
+  // entered (they can delete it). The server enforces the same rules; this just hides buttons that would fail.
+  const authorOf = (item: T) => (item as { entered_by?: EnteredBy | null }).entered_by ?? null;
+  const canEdit = (item: T) => (doctor ? authorOf(item)?.provider_id === scope.providerId : !authorOf(item));
+  const createdOn = (item: T) => (item as { created_at?: string }).created_at?.slice(0, 10);
 
   return (
     <div className="allergies-page">
@@ -44,7 +55,7 @@ export function RecordPage<T, I>({
         <div className="allergies-head">
           <div>
             <h1>{title}</h1>
-            <p className="page-sub">{subtitle}</p>
+            {!doctor && <p className="page-sub">{subtitle}</p>}
           </div>
           {editing === null && (
             <div className="a-actions">
@@ -74,24 +85,35 @@ export function RecordPage<T, I>({
         ) : error ? (
           <ErrorCard message={error} onRetry={crud.reload} />
         ) : items.length === 0 ? (
-          <p className="a-muted">{emptyMessage}</p>
+          <p className="a-muted">{doctor ? 'Nothing recorded yet.' : emptyMessage}</p>
         ) : (
           <ul className="a-list">
             {items.map((item) => (
               <li key={crud.getId(item)} className="a-card a-item">
                 {renderItem(item)}
+                {authorOf(item) && (
+                  <div className="a-meta rec-author">
+                    Entered by {authorOf(item)?.name}
+                    {authorOf(item)?.facility ? `, ${authorOf(item)?.facility}` : ''}
+                    {createdOn(item) ? `, ${formatDate(createdOn(item) as string)}` : ''}
+                  </div>
+                )}
                 <div className="a-actions">
-                  <button type="button" className="a-btn a-btn-sm" onClick={() => crud.openEdit(item)}>
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="a-btn a-btn-sm a-btn-danger"
-                    onClick={() => {
-                      if (window.confirm(confirmDelete(item))) crud.remove(item);
-                    }}>
-                    Delete
-                  </button>
+                  {canEdit(item) && (
+                    <button type="button" className="a-btn a-btn-sm" onClick={() => crud.openEdit(item)}>
+                      Edit
+                    </button>
+                  )}
+                  {!doctor && (
+                    <button
+                      type="button"
+                      className="a-btn a-btn-sm a-btn-danger"
+                      onClick={() => {
+                        if (window.confirm(confirmDelete(item))) crud.remove(item);
+                      }}>
+                      Delete
+                    </button>
+                  )}
                 </div>
               </li>
             ))}

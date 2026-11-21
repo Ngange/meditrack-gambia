@@ -47,6 +47,42 @@ async function registerPatient({ email, password, firstName, lastName }) {
   }
 }
 
+// Creates a doctor's account and profile. They start as "pending" and cannot verify themselves.
+async function registerProvider({ email, password, firstName, lastName, licenceNumber, facilityName, specialty }) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const passwordHash = await argon2.hash(password);
+    const userResult = await client.query(
+      "INSERT INTO users (email, password_hash, role) VALUES ($1, $2, 'provider') RETURNING user_id, email, role",
+      [email, passwordHash],
+    );
+    const user = userResult.rows[0];
+    const profile = await client.query(
+      `INSERT INTO provider_profile (user_id, first_name, last_name, licence_number, facility_name, specialty)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING provider_id`,
+      [user.user_id, firstName, lastName, licenceNumber, facilityName, specialty],
+    );
+    await client.query('COMMIT');
+    return {
+      token: signToken(user),
+      user: { userId: user.user_id, email: user.email, role: user.role },
+      provider_id: profile.rows[0].provider_id,
+    };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    if (err.code === '23505') {
+      if (String(err.constraint || err.message).includes('licence')) {
+        throw new AppError(409, 'An account with this licence number already exists.');
+      }
+      throw new AppError(409, 'An account with this email already exists.');
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 async function login({ email, password }) {
   const result = await pool.query(
     'SELECT user_id, email, password_hash, role, status FROM users WHERE email = $1',
@@ -58,6 +94,8 @@ async function login({ email, password }) {
   const user = result.rows[0];
 
   if (!(await argon2.verify(user.password_hash, password))) throw invalid;
+  // Checked after the password, so only the account's owner learns it is suspended.
+  if (user.status !== 'active') throw new AppError(403, 'This account has been suspended. Contact support.');
 
   return {
     token: signToken(user),
@@ -65,4 +103,4 @@ async function login({ email, password }) {
   };
 }
 
-module.exports = { registerPatient, login };
+module.exports = { registerPatient, registerProvider, login };

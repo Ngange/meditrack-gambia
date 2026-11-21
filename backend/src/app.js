@@ -7,6 +7,7 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
+app.set('trust proxy', env.trustProxy);
 app.use(cors());
 app.use(express.json());
 
@@ -26,9 +27,11 @@ app.get('/health', async (req, res) => {
 app.use('/auth', require('./routes/auth'));
 app.use('/patients', require('./routes/patients'));
 app.use('/records', require('./routes/records'));
-// app.use("/shares", require("./routes/shares"));
+app.use('/shares', require('./routes/shares')); // the patient manages their share links
+app.use('/shared', require('./routes/shared')); // what the person holding a link sees (no login)
 // app.use("/timeline", require("./routes/timeline"));
-// app.use("/admin", require("./routes/admin"));
+app.use('/providers', require('./routes/providers')); // a doctor's own profile and verification status
+app.use('/admin', require('./routes/admin')); // verifying doctors (admin only)
 
 // Must come after all routes: unknown URLs, then every error thrown above.
 app.use(notFound);

@@ -57,4 +57,4 @@
 .a-pill-red { color: var(--a-error); border-color: var(--a-error); }
 .a-pill-green { color: var(--a-ok); background: var(--a-ok-soft); border-color: transparent; }
 .a-pill-blue { color: var(--a-primary); background: var(--a-primary-soft); border-color: transparent; }
-.a-pill-warn { color: var(--a-warn); border-color: var(--a-warn); }
+.a-pill-warn { color: var(--a-warn); border-color: var(--a-warn); }.rec-author { font-style: italic; }

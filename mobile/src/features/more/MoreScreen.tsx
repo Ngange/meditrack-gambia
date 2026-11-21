@@ -7,6 +7,7 @@ import { ThemedView } from '@/components/themed-view';
 import { PressableCard } from '@/components/ui/pressable-card';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { useThemeMode } from '@/context/ThemeContext';
 
 const ROWS = [
   { title: 'My profile', hint: 'Personal details and emergency contact', href: '/profile' },
@@ -15,6 +16,7 @@ const ROWS = [
 
 export function MoreScreen() {
   const { signOut } = useAuth();
+  const { scheme, toggle } = useThemeMode();
   const [signingOut, setSigningOut] = useState(false);
 
   async function handleSignOut() {
@@ -39,6 +41,13 @@ export function MoreScreen() {
             </ThemedText>
           </PressableCard>
         ))}
+
+        <PressableCard label={`Switch to ${scheme === 'dark' ? 'light' : 'dark'} mode`} onPress={toggle}>
+          <ThemedText type="smallBold">{scheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Appearance: {scheme === 'dark' ? 'Dark' : 'Light'}
+          </ThemedText>
+        </PressableCard>
 
         <Pressable
           onPress={handleSignOut}
