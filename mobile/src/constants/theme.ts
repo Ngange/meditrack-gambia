@@ -7,57 +7,59 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+// The same palette as the web app (web/src/components/layout/AppShell.css), so the two look like one product.
+// Cards are a step lighter than the page and have a thin border; inner panels are one step lighter again.
 export const Colors = {
   light: {
     // Template keys (kept, so existing components still work)
-    text: '#1F2937',
-    background: '#F7F9FC',
-    backgroundElement: '#E3F2FD',
-    backgroundSelected: '#BBDEFB',
-    textSecondary: '#5F6B7A',
+    text: '#111827',
+    background: '#F6F8FC',
+    backgroundElement: '#FFFFFF', // cards
+    backgroundSelected: '#E8F0FB', // selected / tinted panels
+    textSecondary: '#5B6475',
 
     // Surfaces and lines
     surface: '#FFFFFF',
-    border: '#E5E7EB',
+    border: '#E3E8F0',
     inputBorder: '#7B8594',
 
     // Brand
-    primary: '#1565C0',
+    primary: '#1C5FB5',
     onPrimary: '#FFFFFF',
-    primaryLight: '#E3F2FD',
+    primaryLight: '#E8F0FB',
     secondary: '#00796B',
     secondaryLight: '#E0F2F1',
 
     // Status
-    success: '#2E7D32',
-    successLight: '#E8F5E9',
-    warning: '#92400E',
-    warningLight: '#FEF3C7',
+    success: '#1B7A3A',
+    successLight: '#E6F4EA',
+    warning: '#A24A05',
+    warningLight: '#FDF0E1',
     error: '#C62828',
     errorLight: '#FDECEA',
     info: '#01579B',
     infoLight: '#E1F5FE',
   },
   dark: {
-    text: '#F3F4F6',
+    text: '#E8EDF5',
     background: '#0B1220',
-    backgroundElement: '#1E293B',
-    backgroundSelected: '#273449',
-    textSecondary: '#9CA3AF',
+    backgroundElement: '#141D2E', // cards
+    backgroundSelected: '#1B2638', // inner panels
+    textSecondary: '#9AA8BD',
 
-    surface: '#151E2E',
-    border: '#2D3B50',
+    surface: '#141D2E',
+    border: '#2A374C',
     inputBorder: '#6B7A90',
 
-    primary: '#64B5F6',
+    primary: '#6FB1F2',
     onPrimary: '#0B1220',
-    primaryLight: '#12324F',
+    primaryLight: '#1A2C47',
     secondary: '#4DB6AC',
     secondaryLight: '#0F3B37',
 
-    success: '#81C784',
-    successLight: '#12301A',
-    warning: '#FBBF24',
+    success: '#6FCF8E',
+    successLight: '#153322',
+    warning: '#F0A560',
     warningLight: '#3A2A06',
     error: '#F28B82',
     errorLight: '#3B1414',

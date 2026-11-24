@@ -1,19 +1,21 @@
-import { createRecordApi, request } from '@/api';
+import { createRecordApi } from '@/api';
+import { activeStore } from '@/offline/active';
+import { createVisitWithRecords, linked } from '@/offline/local';
 
 import type { LinkedRecords, Visit, VisitBundleInput, VisitBundleResult, VisitInput } from './types';
 
-const base = createRecordApi<Visit, VisitInput>('visits', 'visit');
+const base = createRecordApi<Visit, VisitInput>('visits');
 
 export const visitApi = {
   ...base,
 
-  /** Saves the visit and its diagnoses, prescriptions and tests together: all of them, or none. */
-  createWithRecords(bundle: VisitBundleInput) {
-    return request<VisitBundleResult>('/records/visits/with-records', { method: 'POST', body: bundle });
+  /** Saves the visit and its diagnoses, prescriptions and tests together on the phone: all of them, or none. */
+  createWithRecords(bundle: VisitBundleInput): Promise<VisitBundleResult> {
+    return createVisitWithRecords(activeStore(), bundle);
   },
 
   /** What came out of this visit. */
-  linked(id: string) {
-    return request<LinkedRecords>(`/records/visits/${id}/linked`);
+  linked(id: string): Promise<LinkedRecords> {
+    return linked(activeStore(), id);
   },
 };

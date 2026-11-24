@@ -1,13 +1,16 @@
 import { router } from 'expo-router';
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet } from 'react-native';
 
 import type { Summary } from '@/api';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ErrorNotice } from '@/components/ui/error-notice';
 import { PressableCard } from '@/components/ui/pressable-card';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
+import { useThemeMode } from '@/context/ThemeContext';
+import { useTheme } from '@/hooks/use-theme';
 import { RECORD_TYPES } from '@/features/records/recordTypes';
+import { SyncStatusCard } from '@/features/sync/SyncStatusCard';
 import { useFocusLoad } from '@/hooks/useFocusLoad';
 
 import { greeting } from './greeting';
@@ -20,6 +23,8 @@ export function HomeScreen() {
   // Reloads whenever the tab comes back into focus, so counts are fresh after adding records.
   const { data, loading, error, refreshing, retry, refresh } = useFocusLoad(loadHome);
 
+  const { scheme, toggle } = useThemeMode();
+  const theme = useTheme();
   const profile = data?.profile ?? null;
   const needsEmergencyInfo = profile !== null && (!profile.blood_group || !profile.emergency_contact_name);
 
@@ -28,10 +33,21 @@ export function HomeScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}>
-        <ThemedView style={styles.heading}>
-          <ThemedText themeColor="textSecondary">{greeting()}</ThemedText>
-          <ThemedText type="title">{profile ? profile.first_name : 'MediTrack'}</ThemedText>
+        <ThemedView style={styles.top}>
+          <ThemedView style={styles.heading}>
+            <ThemedText themeColor="textSecondary">{greeting()}</ThemedText>
+            <ThemedText type="title">{profile ? profile.first_name : 'MediTrack'}</ThemedText>
+          </ThemedView>
+          <Pressable
+            onPress={toggle}
+            accessibilityRole="button"
+            accessibilityLabel={`Switch to ${scheme === 'dark' ? 'light' : 'dark'} mode`}
+            style={[styles.modeButton, { borderColor: theme.border, backgroundColor: theme.backgroundElement }]}>
+            <ThemedText type="small">{scheme === 'dark' ? 'Light mode' : 'Dark mode'}</ThemedText>
+          </Pressable>
         </ThemedView>
+
+        <SyncStatusCard />
 
         {loading ? (
           <ActivityIndicator style={styles.spinner} />
@@ -73,7 +89,9 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: Spacing.four, gap: Spacing.three },
-  heading: { gap: Spacing.one },
+  top: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.two },
+  heading: { gap: Spacing.one, flexShrink: 1 },
+  modeButton: { borderWidth: 1, borderRadius: Radius.pill, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two },
   spinner: { marginTop: Spacing.five },
   error: { marginTop: Spacing.four },
 });

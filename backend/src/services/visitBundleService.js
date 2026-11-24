@@ -16,11 +16,11 @@ const medications = createRecordService(models.medication);
 const labResults = createRecordService(models.labResult);
 
 // A duplicate inside the bundle says which item it was ("Diagnosis 2: ...").
-async function insertAll(client, patientId, service, label, values, visitId) {
+async function insertAll(client, patientId, service, label, values, visitId, providerId) {
   const saved = [];
   for (const [i, value] of values.entries()) {
     try {
-      saved.push(await service.insertIn(client, patientId, { ...value, visitId }));
+      saved.push(await service.insertIn(client, patientId, { ...value, visitId }, providerId));
     } catch (err) {
       if (err instanceof AppError && err.status === 409) throw new AppError(409, `${label} ${i + 1}: ${err.message}`);
       throw err;
@@ -30,14 +30,14 @@ async function insertAll(client, patientId, service, label, values, visitId) {
 }
 
 // Saves a visit and everything that came out of it in one transaction: all of it, or none.
-async function createWithRecords(patientId, bundle) {
+async function createWithRecords(patientId, bundle, providerId = null) {
   return withPatientLock(patientId, async (client) => {
-    const visit = await visits.insertIn(client, patientId, bundle.visit);
+    const visit = await visits.insertIn(client, patientId, bundle.visit, providerId);
     return {
       visit,
-      conditions: await insertAll(client, patientId, conditions, 'Diagnosis', bundle.conditions, visit.visit_id),
-      medications: await insertAll(client, patientId, medications, 'Prescription', bundle.medications, visit.visit_id),
-      lab_results: await insertAll(client, patientId, labResults, 'Test', bundle.labResults, visit.visit_id),
+      conditions: await insertAll(client, patientId, conditions, 'Diagnosis', bundle.conditions, visit.visit_id, providerId),
+      medications: await insertAll(client, patientId, medications, 'Prescription', bundle.medications, visit.visit_id, providerId),
+      lab_results: await insertAll(client, patientId, labResults, 'Test', bundle.labResults, visit.visit_id, providerId),
     };
   });
 }

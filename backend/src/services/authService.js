@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const env = require('../config/env');
 const AppError = require('../utils/AppError');
+const deviceService = require('./deviceService');
 
 function signToken(user) {
   return jwt.sign({ userId: user.user_id, role: user.role }, env.jwtSecret, {
@@ -11,7 +12,14 @@ function signToken(user) {
 }
 
 // Creates the account and its empty patient profile in one transaction.
-async function registerPatient({ email, password, firstName, lastName }) {
+async function registerPatient({ device, ...account }) {
+  const created = await createPatientAccount(account);
+  // After the registration's own connection is released, so two are never held at once.
+  const issued = device ? await deviceService.issue(created.patient_id, device) : null;
+  return issued ? { ...created, device: issued } : created;
+}
+
+async function createPatientAccount({ email, password, firstName, lastName }) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -83,7 +91,7 @@ async function registerProvider({ email, password, firstName, lastName, licenceN
   }
 }
 
-async function login({ email, password }) {
+async function login({ email, password, device }) {
   const result = await pool.query(
     'SELECT user_id, email, password_hash, role, status FROM users WHERE email = $1',
     [email],
@@ -97,10 +105,27 @@ async function login({ email, password }) {
   // Checked after the password, so only the account's owner learns it is suspended.
   if (user.status !== 'active') throw new AppError(403, 'This account has been suspended. Contact support.');
 
+  // A phone that signed in with its details gets a device key for offline sync (patients only).
+  let issued = null;
+  if (device && user.role === 'patient') {
+    const profile = await pool.query('SELECT patient_id FROM patient_profile WHERE user_id = $1', [user.user_id]);
+    if (profile.rows[0]) issued = await deviceService.issue(profile.rows[0].patient_id, device);
+  }
   return {
     token: signToken(user),
     user: { userId: user.user_id, email: user.email, role: user.role },
+    ...(issued ? { device: issued } : {}),
   };
 }
 
-module.exports = { registerPatient, registerProvider, login };
+// The phone trades its device key for a fresh login token without asking for the password.
+async function refreshDevice({ deviceKey }) {
+  const r = await deviceService.refresh(deviceKey);
+  return {
+    token: signToken({ user_id: r.user.user_id, role: r.user.role }),
+    user: { userId: r.user.user_id, email: r.user.email, role: r.user.role },
+    device: { device_id: r.device_id, device_key: r.device_key },
+  };
+}
+
+module.exports = { registerPatient, registerProvider, login, refreshDevice };

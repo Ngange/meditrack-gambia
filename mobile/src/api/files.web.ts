@@ -1,15 +1,10 @@
 import { API_URL } from '@/config/env';
-import { getToken } from '@/utils/token-storage';
 
-import { ApiError, notifyUnauthorized } from './client';
+import { ApiError, getAuthToken, notifyUnauthorized } from './client';
 
 /** Web build: fetches the file with the token and returns a temporary object URL for it. */
 export async function downloadFile(path: string, _fileName: string) {
-  const token = await getToken();
-  if (!token) {
-    notifyUnauthorized();
-    throw new ApiError('Please log in again.', 401);
-  }
+  const token = await getAuthToken();
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, { headers: { Authorization: `Bearer ${token}` } });

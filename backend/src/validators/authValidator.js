@@ -1,3 +1,11 @@
+// The phone may say who it is when signing in, so it can be given a device key for offline sync.
+// Anything wrong with it is ignored rather than refusing the sign-in.
+function cleanDevice(raw) {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const text = (v, max) => (typeof v === 'string' && v.trim() && v.trim().length <= max ? v.trim() : undefined);
+  return { name: text(raw.name, 150), platform: raw.platform === 'android' ? 'android' : undefined, deviceKey: text(raw.deviceKey, 200) };
+}
+
 function validateRegister(body) {
   const { email, password, firstName, lastName } = body;
   if (!email || !password || !firstName || !lastName) {
@@ -8,7 +16,7 @@ function validateRegister(body) {
   if (password.length < 8) {
     return { error: 'Password must be at least 8 characters.' };
   }
-  return { value: { email, password, firstName, lastName } };
+  return { value: { email, password, firstName, lastName, device: cleanDevice(body.device) } };
 }
 
 function validateLogin(body) {
@@ -16,7 +24,12 @@ function validateLogin(body) {
   if (!email || !password) {
     return { error: 'Email and password are required.' };
   }
-  return { value: { email, password } };
+  return { value: { email, password, device: cleanDevice(body.device) } };
 }
 
-module.exports = { validateRegister, validateLogin };
+function validateDeviceRefresh(body) {
+  if (typeof body.deviceKey !== 'string' || !body.deviceKey) return { error: 'Sign in again to sync.' };
+  return { value: { deviceKey: body.deviceKey } };
+}
+
+module.exports = { validateRegister, validateLogin, validateDeviceRefresh };

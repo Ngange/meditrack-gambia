@@ -1,0 +1,250 @@
+// The made-up clinical histories used by seed-test-data.js. Three different people, each with
+// 10 allergies, 10 conditions, 10 medications, 10 visits, 10 lab results and 10 documents.
+// Numbers after each entry are "days ago", so the dates always stay in the past.
+//   allergies:   [allergen, reaction, severity, status]
+//   conditions:  [name, status, notes, daysAgo]
+//   medications: [name, dosage, frequency, status, startedDaysAgo, courseDays (null = ongoing)]
+//   visits:      [facility, reason, diagnosis, treatment, notes, daysAgo]
+//   labs:        [test, result, referenceRange, daysAgo, facility]
+//   docs:        [asset file, documentType, description, shown file name, daysAgo]
+
+const EFSTH = 'Edward Francis Small Teaching Hospital';
+const KGH = 'Kanifing General Hospital';
+const BUNDUNG = 'Bundung Maternal and Child Health Hospital';
+
+// ---------------------------------------------------------------------------------------------
+// Fatou Ceesay, 31, O+. Asthma since childhood, iron-deficiency anaemia, malaria most rainy seasons,
+// migraines, and a run of urinary infections. Allergic type: dust, pollen, eggs, penicillin.
+const fatou = {
+  allergies: [
+    ['Dust mites', 'Wheezing and night cough', 'moderate', 'active'],
+    ['Pollen', 'Sneezing, watery eyes', 'mild', 'active'],
+    ['Penicillin', 'Itchy rash all over the body', 'moderate', 'active'],
+    ['Eggs', 'Stomach cramps after eating', 'mild', 'resolved'],
+    ['Cat hair', 'Itchy eyes and runny nose', 'mild', 'active'],
+    ['Latex', 'Redness where gloves touched skin', 'mild', 'active'],
+    ['Aspirin', 'Wheezing within an hour of a dose', 'severe', 'active'],
+    ['Mould', 'Chest tightness in damp rooms', 'moderate', 'active'],
+    ['Cockroach droppings', 'Cough and sneezing', 'mild', 'active'],
+    ['Perfume spray', 'Headache and sneezing', 'mild', 'resolved'],
+  ],
+  conditions: [
+    ['Asthma', 'chronic', 'Diagnosed in childhood. Worse in the dry harmattan season.', 7000],
+    ['Allergic rhinitis', 'chronic', 'Seasonal, linked to dust and pollen', 3300],
+    ['Iron-deficiency anaemia', 'active', 'Low haemoglobin on repeated tests; iron started', 520],
+    ['Malaria (rainy season)', 'resolved', 'Third episode in two years, fully treated', 410],
+    ['Migraine', 'chronic', 'Around two attacks a month, often before her period', 1500],
+    ['Urinary tract infection', 'resolved', 'Second episode this year; advised to drink more water', 300],
+    ['Peptic gastritis', 'resolved', 'Settled after stopping painkillers on an empty stomach', 760],
+    ['Vitamin D deficiency', 'active', 'Supplement started, retest due', 240],
+    ['Typhoid fever', 'resolved', 'Treated in 2022, no relapse', 1400],
+    ['Eczema', 'chronic', 'Mild patches on elbows, moisturiser as needed', 3900],
+  ],
+  medications: [
+    ['Salbutamol inhaler', '2 puffs', 'When wheezy, up to 4 times a day', 'active', 3000, null],
+    ['Beclometasone inhaler', '2 puffs', 'Twice daily', 'active', 900, null],
+    ['Montelukast', '10 mg', 'Once daily at night', 'active', 700, null],
+    ['Ferrous sulfate', '200 mg', 'Once daily', 'active', 500, null],
+    ['Cetirizine', '10 mg', 'Once daily during allergy season', 'active', 1200, null],
+    ['Artemether-lumefantrine', '4 tablets', 'Twice daily for 3 days', 'completed', 410, 3],
+    ['Nitrofurantoin', '100 mg', 'Twice daily for 5 days', 'completed', 300, 5],
+    ['Sumatriptan', '50 mg', 'At the start of a migraine, max 2 a day', 'active', 1400, null],
+    ['Omeprazole', '20 mg', 'Once daily before breakfast', 'discontinued', 760, 28],
+    ['Vitamin D3', '1000 IU', 'Once daily', 'active', 230, null],
+  ],
+  visits: [
+    [EFSTH, 'Fever, chills and body aches', 'Malaria, uncomplicated', 'Artemether-lumefantrine for 3 days', 'Rapid test positive. Sleep under a treated net.', 410],
+    [KGH, 'Wheezing and night cough for two weeks', 'Asthma, poorly controlled', 'Added a daily steroid inhaler', 'Taught inhaler technique; review in 6 weeks', 880],
+    [KGH, 'Asthma review', 'Asthma, improving', 'Continue beclometasone, add montelukast', 'Peak flow 380 L/min, up from 290', 700],
+    [BUNDUNG, 'Tiredness, dizziness, pale palms', 'Iron-deficiency anaemia', 'Ferrous sulfate daily, eat iron-rich foods', 'Repeat blood count in 8 weeks', 520],
+    [BUNDUNG, 'Anaemia follow-up', 'Anaemia, slowly improving', 'Continue iron for 3 more months', 'Haemoglobin up from 8.9 to 10.4', 380],
+    [EFSTH, 'Burning when passing urine', 'Urinary tract infection', 'Nitrofurantoin for 5 days', 'Urine culture sent; drink 2 litres of water daily', 300],
+    [EFSTH, 'Severe headache with light sensitivity', 'Migraine with aura', 'Sumatriptan at onset, trigger diary', 'X-ray of the sinuses and skull showed nothing abnormal', 250],
+    [KGH, 'Cough and chest tightness after cleaning the house', 'Asthma flare triggered by dust', 'Short steroid course and spacer device', 'Chest X-ray clear, no pneumonia', 150],
+    [BUNDUNG, 'Routine health check', 'Healthy apart from known conditions', 'No change to treatment', 'Weight stable; vitamin D low', 240],
+    [KGH, 'Asthma and anaemia review', 'Both stable', 'Continue current medicines', 'Follow-up chest X-ray normal', 60],
+  ],
+  labs: [
+    ['Haemoglobin', '8.9 g/dL', '12.0 - 15.5 g/dL', 530, EFSTH],
+    ['Haemoglobin', '10.4 g/dL', '12.0 - 15.5 g/dL', 380, EFSTH],
+    ['Haemoglobin', '11.8 g/dL', '12.0 - 15.5 g/dL', 70, EFSTH],
+    ['Ferritin', '9 ng/mL', '15 - 150 ng/mL', 530, EFSTH],
+    ['Malaria parasite (RDT)', 'Positive (P. falciparum)', 'Negative', 410, EFSTH],
+    ['Malaria parasite (RDT)', 'Negative', 'Negative', 395, EFSTH],
+    ['Urinalysis - leucocytes', '3+', 'Negative', 300, EFSTH],
+    ['Urine culture', 'E. coli, sensitive to nitrofurantoin', 'No growth', 299, EFSTH],
+    ['Vitamin D (25-OH)', '14 ng/mL', '30 - 100 ng/mL', 240, 'Bundung Laboratory'],
+    ['Eosinophil count', '0.7 x10^9/L', '0.0 - 0.5 x10^9/L', 880, KGH],
+  ],
+  docs: [
+    ['xray-chest-pa.png', 'other', 'Chest X-ray during an asthma flare, no pneumonia', 'chest-xray-asthma-flare.png', 150],
+    ['xray-chest-pa-2.png', 'other', 'Follow-up chest X-ray, normal', 'chest-xray-followup.png', 60],
+    ['xray-skull-lateral.png', 'other', 'Skull X-ray for severe headaches, normal', 'skull-xray-headache.png', 250],
+    ['sample-prescription.pdf', 'prescription', 'Inhalers and montelukast', 'prescription-asthma.pdf', 700],
+    ['sample-prescription.pdf', 'prescription', 'Iron tablets for anaemia', 'prescription-iron.pdf', 520],
+    ['sample-lab-report.pdf', 'lab_report', 'Blood count and ferritin', 'lab-report-anaemia.pdf', 530],
+    ['sample-lab-report.pdf', 'lab_report', 'Urine culture result', 'lab-report-urine-culture.pdf', 299],
+    ['sample-discharge-summary.pdf', 'discharge_summary', 'One-night stay for malaria with vomiting', 'discharge-malaria.pdf', 410],
+    ['sample-medical-certificate.pdf', 'medical_certificate', 'Sick note for malaria, 5 days', 'sick-note-malaria.pdf', 409],
+    ['sample-medical-certificate.pdf', 'medical_certificate', 'Sick note for migraine, 2 days', 'sick-note-migraine.pdf', 249],
+  ],
+};
+
+// ---------------------------------------------------------------------------------------------
+// Modou Jallow, 45, A+. Type 2 diabetes and hypertension for about 8 years, high cholesterol,
+// early kidney strain, knee osteoarthritis and back pain; stomach ulcer from anti-inflammatories.
+// Drug allergies: sulfa, NSAIDs, codeine.
+const modou = {
+  allergies: [
+    ['Sulfonamide antibiotics', 'Widespread rash and fever', 'severe', 'active'],
+    ['Diclofenac', 'Stomach bleeding and wheeze', 'severe', 'active'],
+    ['Ibuprofen', 'Stomach pain and swelling of the face', 'moderate', 'active'],
+    ['Codeine', 'Vomiting and severe itching', 'moderate', 'active'],
+    ['Shellfish', 'Hives and lip swelling', 'moderate', 'active'],
+    ['Iodine contrast dye', 'Flushing during a scan', 'mild', 'active'],
+    ['Adhesive plaster', 'Skin redness', 'mild', 'active'],
+    ['Bee stings', 'Large local swelling', 'mild', 'resolved'],
+    ['Groundnut oil', 'Stomach upset', 'mild', 'resolved'],
+    ['Chlorhexidine', 'Contact rash', 'mild', 'active'],
+  ],
+  conditions: [
+    ['Hypertension', 'chronic', 'Diagnosed at a routine check; on two medicines', 2900],
+    ['Type 2 diabetes', 'chronic', 'Diet, metformin and later sitagliptin', 2700],
+    ['High cholesterol', 'chronic', 'LDL high despite diet changes; statin started', 1500],
+    ['Chronic kidney disease, stage 2', 'chronic', 'Mild protein in urine; kidney function checked every 6 months', 600],
+    ['Knee osteoarthritis (right)', 'chronic', 'Pain on stairs; X-ray shows joint space narrowing', 800],
+    ['Chronic low back pain', 'active', 'Physiotherapy advised', 460],
+    ['Peptic ulcer', 'resolved', 'Caused by diclofenac; healed after treatment', 1100],
+    ['Obesity', 'active', 'BMI 32, weight-loss plan agreed', 2000],
+    ['Diabetic neuropathy', 'active', 'Tingling in both feet at night', 300],
+    ['Malaria', 'resolved', 'Single episode, treated', 1800],
+  ],
+  medications: [
+    ['Metformin', '1000 mg', 'Twice daily with meals', 'active', 2700, null],
+    ['Sitagliptin', '100 mg', 'Once daily', 'active', 1300, null],
+    ['Amlodipine', '10 mg', 'Once daily', 'active', 2800, null],
+    ['Lisinopril', '10 mg', 'Once daily in the morning', 'active', 1000, null],
+    ['Atorvastatin', '20 mg', 'Once daily at night', 'active', 1400, null],
+    ['Aspirin', '75 mg', 'Once daily after food', 'active', 1000, null],
+    ['Omeprazole', '40 mg', 'Once daily for 8 weeks', 'completed', 1100, 56],
+    ['Diclofenac', '50 mg', 'Twice daily', 'discontinued', 1300, 90],
+    ['Paracetamol', '1 g', 'Every 6 hours when needed for knee pain', 'active', 790, null],
+    ['Gabapentin', '300 mg', 'Once daily at night', 'active', 290, null],
+  ],
+  visits: [
+    [KGH, 'Headache and dizziness', 'Hypertension, newly found', 'Amlodipine started, salt reduction', 'Blood pressure 168/102', 2900],
+    [EFSTH, 'Excessive thirst and frequent urination', 'Type 2 diabetes', 'Metformin and diet plan', 'Fasting glucose 11.8 mmol/L', 2700],
+    [EFSTH, 'Diabetes review', 'Diabetes, partly controlled', 'Sitagliptin added', 'HbA1c 8.4 %, dietitian referral', 1300],
+    [KGH, 'Vomiting blood-stained fluid and stomach pain', 'Bleeding peptic ulcer', 'Stopped diclofenac, omeprazole 40 mg', 'Endoscopy confirmed an ulcer', 1100],
+    [EFSTH, 'Cholesterol and blood pressure review', 'High cholesterol, hypertension not at target', 'Atorvastatin and lisinopril added', 'Total cholesterol 6.8 mmol/L', 1000],
+    [KGH, 'Right knee pain on stairs', 'Knee osteoarthritis', 'Paracetamol, physiotherapy, weight loss', 'X-ray shows narrowing of the joint space', 800],
+    [EFSTH, 'Protein found in routine urine test', 'Early diabetic kidney disease', 'Lisinopril continued, review in 6 months', 'Creatinine slightly raised', 600],
+    [KGH, 'Lower back pain for three months', 'Mechanical back pain', 'Physiotherapy and posture advice', 'Lumbar spine X-ray: mild wear changes only', 460],
+    [EFSTH, 'Tingling and burning in both feet at night', 'Diabetic neuropathy', 'Gabapentin 300 mg at night, daily foot checks', 'Foot pulses present, no ulcers', 290],
+    [EFSTH, 'Six-monthly review', 'Diabetes and blood pressure improving', 'Continue all medicines', 'HbA1c 6.9 %, blood pressure 132/84', 40],
+  ],
+  labs: [
+    ['HbA1c', '8.4 %', '4.0 - 5.6 %', 1300, EFSTH],
+    ['HbA1c', '7.6 %', '4.0 - 5.6 %', 900, EFSTH],
+    ['HbA1c', '7.1 %', '4.0 - 5.6 %', 450, EFSTH],
+    ['HbA1c', '6.9 %', '4.0 - 5.6 %', 40, EFSTH],
+    ['Fasting blood glucose', '11.8 mmol/L', '3.9 - 5.6 mmol/L', 2700, EFSTH],
+    ['Total cholesterol', '6.8 mmol/L', 'Below 5.2 mmol/L', 1000, EFSTH],
+    ['LDL cholesterol', '4.4 mmol/L', 'Below 3.4 mmol/L', 1000, EFSTH],
+    ['Creatinine', '118 umol/L', '60 - 110 umol/L', 600, EFSTH],
+    ['Urine albumin/creatinine ratio', '48 mg/g', 'Below 30 mg/g', 600, EFSTH],
+    ['Haemoglobin', '9.8 g/dL', '13.5 - 17.5 g/dL', 1100, KGH],
+  ],
+  docs: [
+    ['xray-knee.png', 'other', 'Right knee X-ray: osteoarthritis', 'knee-xray-osteoarthritis.png', 800],
+    ['xray-lumbar-spine.png', 'other', 'Lumbar spine X-ray, mild wear changes', 'lumbar-spine-xray.png', 460],
+    ['xray-chest-pa.png', 'other', 'Chest X-ray before starting treatment, normal', 'chest-xray-baseline.png', 1000],
+    ['sample-prescription.pdf', 'prescription', 'Diabetes and blood pressure medicines', 'prescription-diabetes-bp.pdf', 1000],
+    ['sample-prescription.pdf', 'prescription', 'Gabapentin for nerve pain', 'prescription-gabapentin.pdf', 290],
+    ['sample-lab-report.pdf', 'lab_report', 'HbA1c and lipid profile', 'lab-report-hba1c-lipids.pdf', 1000],
+    ['sample-lab-report.pdf', 'lab_report', 'Kidney function and urine protein', 'lab-report-kidney.pdf', 600],
+    ['sample-discharge-summary.pdf', 'discharge_summary', 'Admission for bleeding stomach ulcer', 'discharge-stomach-ulcer.pdf', 1095],
+    ['sample-medical-certificate.pdf', 'medical_certificate', 'Sick note after hospital stay, 14 days', 'sick-note-ulcer.pdf', 1090],
+    ['sample-medical-certificate.pdf', 'medical_certificate', 'Fitness-for-work letter, diabetes controlled', 'fitness-letter.pdf', 39],
+  ],
+};
+
+// ---------------------------------------------------------------------------------------------
+// Awa Sanneh, 25, B+. Sickle cell disease (HbSS) with pain crises, past wrist fracture, typhoid,
+// and a chest crisis. Allergies are mostly drug and food related.
+const awa = {
+  allergies: [
+    ['Sulfadoxine-pyrimethamine', 'Skin peeling and mouth sores', 'severe', 'active'],
+    ['Morphine', 'Severe nausea and itching', 'moderate', 'active'],
+    ['Tramadol', 'Dizziness and vomiting', 'mild', 'active'],
+    ['Cow milk', 'Stomach pain and loose stools', 'mild', 'active'],
+    ['Cashew nuts', 'Lip swelling and hives', 'severe', 'active'],
+    ['Nickel jewellery', 'Itchy rash on ears and wrists', 'mild', 'active'],
+    ['Blood transfusion (febrile reaction)', 'Fever and shivering during the second unit', 'moderate', 'active'],
+    ['Penicillin V', 'Mild rash as a child', 'mild', 'resolved'],
+    ['Mango skin', 'Itchy lips', 'mild', 'resolved'],
+    ['Hair dye', 'Scalp irritation', 'mild', 'active'],
+  ],
+  conditions: [
+    ['Sickle cell disease (HbSS)', 'chronic', 'Diagnosed in infancy; pain crises 3 to 4 times a year', 8700],
+    ['Chronic haemolytic anaemia', 'chronic', 'Baseline haemoglobin 7 to 8 g/dL', 8700],
+    ['Acute chest syndrome', 'resolved', 'One admission, recovered fully', 540],
+    ['Typhoid fever', 'resolved', 'Treated with ciprofloxacin', 700],
+    ['Fracture of the left wrist', 'resolved', 'Fell in the compound; cast for 6 weeks, healed well', 400],
+    ['Urinary tract infection', 'resolved', 'Common with sickle cell; treated early', 230],
+    ['Vitamin D deficiency', 'active', 'Supplement continues', 330],
+    ['Iron overload (mild)', 'active', 'After repeated transfusions; monitored', 180],
+    ['Delayed puberty (past)', 'resolved', 'Periods began at 15, now regular', 3300],
+    ['Pregnancy planning counselling', 'active', 'Advised to plan with specialist care', 90],
+  ],
+  medications: [
+    ['Folic acid', '5 mg', 'Once daily', 'active', 8000, null],
+    ['Hydroxyurea', '500 mg', 'Once daily', 'active', 1100, null],
+    ['Penicillin V (prophylaxis)', '250 mg', 'Twice daily', 'completed', 8000, 3600],
+    ['Paracetamol', '1 g', 'Every 6 hours during a pain crisis', 'active', 3000, null],
+    ['Ciprofloxacin', '500 mg', 'Twice daily for 14 days', 'completed', 700, 14],
+    ['Vitamin D3', '2000 IU', 'Once daily', 'active', 330, null],
+    ['Antimalarial prophylaxis (proguanil)', '200 mg', 'Once daily in rainy season', 'active', 600, null],
+    ['Deferasirox', '20 mg/kg', 'Once daily', 'active', 170, null],
+    ['Ceftriaxone', '2 g', 'Once daily for 5 days (in hospital)', 'completed', 540, 5],
+    ['Ibuprofen', '400 mg', 'Three times daily for 5 days', 'discontinued', 400, 3],
+  ],
+  visits: [
+    [EFSTH, 'Severe pain in the back and legs', 'Sickle cell pain crisis', 'Fluids, oxygen, strong painkillers', 'Two nights on the ward; trigger was dehydration', 1000],
+    [EFSTH, 'Cough, chest pain and fever', 'Acute chest syndrome', 'Oxygen, ceftriaxone, blood transfusion', 'Chest X-ray showed shadows in both lungs; admitted 6 days', 540],
+    [EFSTH, 'Haematology review', 'Sickle cell disease, steady', 'Hydroxyurea dose reviewed', 'Fewer crises since starting hydroxyurea', 380],
+    [KGH, 'Fall on an outstretched hand, swollen wrist', 'Fracture of the left wrist', 'Plaster cast for 6 weeks', 'X-ray confirmed a distal radius fracture', 400],
+    [KGH, 'Cast removal and check', 'Healed fracture', 'Physiotherapy exercises', 'Full movement returned after 4 weeks', 358],
+    [EFSTH, 'Prolonged fever and abdominal pain', 'Typhoid fever', 'Ciprofloxacin 14 days', 'Blood culture positive for Salmonella typhi', 700],
+    [BUNDUNG, 'Burning on passing urine', 'Urinary tract infection', 'Antibiotics for 5 days', 'Advised to drink more water', 230],
+    [EFSTH, 'Yearly eye and kidney screening', 'No sickle eye damage; mild protein in urine', 'Repeat urine test in 3 months', 'Eye clinic review normal', 300],
+    [EFSTH, 'Blood iron check after transfusions', 'Mild iron overload', 'Deferasirox started', 'Ferritin 1,450 ng/mL', 180],
+    [BUNDUNG, 'Pregnancy planning advice', 'Counselling given', 'Folic acid, specialist follow-up before conceiving', 'Discussed risks and genetic counselling for the partner', 90],
+  ],
+  labs: [
+    ['Haemoglobin', '7.2 g/dL', '12.0 - 15.5 g/dL', 1000, EFSTH],
+    ['Haemoglobin', '6.1 g/dL', '12.0 - 15.5 g/dL', 540, EFSTH],
+    ['Haemoglobin', '8.3 g/dL', '12.0 - 15.5 g/dL', 380, EFSTH],
+    ['Haemoglobin electrophoresis', 'HbSS (HbS 88 %, HbF 9 %)', 'HbA 95 - 98 %', 3000, EFSTH],
+    ['Reticulocyte count', '9.5 %', '0.5 - 2.5 %', 380, EFSTH],
+    ['White cell count', '17.8 x10^9/L', '4.0 - 11.0 x10^9/L', 540, EFSTH],
+    ['Blood culture', 'Salmonella typhi isolated', 'No growth', 705, EFSTH],
+    ['Ferritin', '1450 ng/mL', '15 - 150 ng/mL', 180, EFSTH],
+    ['Urine albumin/creatinine ratio', '41 mg/g', 'Below 30 mg/g', 300, EFSTH],
+    ['Bilirubin (total)', '48 umol/L', '5 - 21 umol/L', 1000, EFSTH],
+  ],
+  docs: [
+    ['xray-hand.png', 'other', 'Left wrist and hand X-ray showing the fracture', 'wrist-xray-fracture.png', 400],
+    ['xray-chest-pa-2.png', 'other', 'Chest X-ray during acute chest syndrome', 'chest-xray-acute-chest.png', 540],
+    ['xray-lumbar-spine.png', 'other', 'Lumbar spine X-ray for back pain during a crisis', 'lumbar-spine-xray.png', 1000],
+    ['sample-prescription.pdf', 'prescription', 'Hydroxyurea and folic acid', 'prescription-hydroxyurea.pdf', 380],
+    ['sample-prescription.pdf', 'prescription', 'Ciprofloxacin for typhoid', 'prescription-typhoid.pdf', 700],
+    ['sample-lab-report.pdf', 'lab_report', 'Haemoglobin electrophoresis report', 'lab-report-electrophoresis.pdf', 3000],
+    ['sample-lab-report.pdf', 'lab_report', 'Ferritin and blood count', 'lab-report-ferritin.pdf', 180],
+    ['sample-discharge-summary.pdf', 'discharge_summary', 'Discharge after acute chest syndrome, 6 days', 'discharge-acute-chest.pdf', 534],
+    ['sample-discharge-summary.pdf', 'discharge_summary', 'Discharge after pain crisis, 2 days', 'discharge-pain-crisis.pdf', 998],
+    ['sample-medical-certificate.pdf', 'medical_certificate', 'Sick note for wrist fracture, 6 weeks', 'sick-note-fracture.pdf', 399],
+  ],
+};
+
+module.exports = { fatou, modou, awa };

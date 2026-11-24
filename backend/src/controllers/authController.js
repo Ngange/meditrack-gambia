@@ -19,4 +19,8 @@ const login = asyncHandler('Login failed. Please try again.', async (req, res) =
   res.json(await authService.login(req.valid));
 });
 
-module.exports = { register, registerProvider, login };
+const deviceRefresh = asyncHandler('Could not sync. Please try again.', async (req, res) => {
+  res.json(await authService.refreshDevice(req.valid));
+});
+
+module.exports = { register, registerProvider, login, deviceRefresh };

@@ -24,6 +24,11 @@ function errorHandler(err, req, res, next) {
     return res.status(400).json({ error: 'Request body is not valid JSON.' });
   }
 
+  // A request body over the size limit.
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'That request is too large. Try again with fewer changes.' });
+  }
+
   // 23514 = a CHECK constraint rejected a value, 22001 = a value is longer than its column allows.
   if (err.code === '23514' || err.code === '22001') {
     return res.status(400).json({

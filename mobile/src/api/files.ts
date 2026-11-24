@@ -1,19 +1,14 @@
 import { File, Paths } from 'expo-file-system';
 
 import { API_URL } from '@/config/env';
-import { getToken } from '@/utils/token-storage';
 
-import { ApiError, notifyUnauthorized } from './client';
+import { ApiError, getAuthToken, notifyUnauthorized } from './client';
 
 const safeName = (name: string) => name.replace(/[^\w.\- ]+/g, '_');
 
 /** Downloads an authenticated file from the API into the phone's cache and returns its local uri. */
 export async function downloadFile(path: string, fileName: string) {
-  const token = await getToken();
-  if (!token) {
-    notifyUnauthorized();
-    throw new ApiError('Please log in again.', 401);
-  }
+  const token = await getAuthToken();
 
   const destination = new File(Paths.cache, `${Date.now()}-${safeName(fileName)}`);
   try {

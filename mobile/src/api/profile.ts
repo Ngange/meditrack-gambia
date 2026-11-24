@@ -1,4 +1,5 @@
 import { request } from './client';
+import { activeStore } from '@/offline/active';
 
 export type Profile = {
   patient_id: string;
@@ -21,7 +22,16 @@ export type ProfileInput = {
   emergencyContactPhone?: string;
 };
 
-export const getProfile = async () => (await request<{ profile: Profile }>('/patients/me')).profile;
+/** The profile as last downloaded. Every sync refreshes it. */
+export async function getProfile(): Promise<Profile> {
+  const saved = await activeStore().profile<Profile>();
+  if (!saved) throw new Error('Your profile has not been downloaded yet. Connect to the internet once to load it.');
+  return saved;
+}
 
-export const updateProfile = async (input: ProfileInput) =>
-  (await request<{ profile: Profile }>('/patients/me', { method: 'PUT', body: input })).profile;
+/** Profile changes go straight to the server (they are not part of the offline queue), so they need a connection. */
+export async function updateProfile(input: ProfileInput) {
+  const { profile } = await request<{ profile: Profile }>('/patients/me', { method: 'PUT', body: input });
+  await activeStore().setMeta('profile', JSON.stringify(profile));
+  return profile;
+}

@@ -1,5 +1,4 @@
 import { API_URL, REQUEST_TIMEOUT_MS } from '@/config/env';
-import { getToken } from '@/utils/token-storage';
 
 export class ApiError extends Error {
   status: number;
@@ -19,6 +18,28 @@ export function isAuthError(err: unknown) {
 
 export function errorMessage(err: unknown) {
   return err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+}
+
+// Where the login token comes from. offline/appSession.ts sets this: it returns the saved token, or gets a
+// new one with the phone's device key. It throws an ApiError when neither is possible.
+let tokenProvider: () => Promise<string> = async () => {
+  throw new ApiError('Please log in again.', 401);
+};
+export function setTokenProvider(fn: () => Promise<string>) {
+  tokenProvider = fn;
+}
+
+// While online sync is switched off the app makes no calls to the server at all (the patient chose to keep it
+// wholly offline). The message says why; null means calls are allowed.
+let blockedReason: string | null = null;
+export function setOnlineBlocked(reason: string | null) {
+  blockedReason = reason;
+}
+
+/** A valid login token for code that talks to the server without `request` (file downloads). */
+export async function getAuthToken() {
+  if (blockedReason) throw new ApiError(blockedReason, 0, true);
+  return tokenProvider();
 }
 
 // One place decides what happens when the server rejects the saved token:
@@ -53,12 +74,8 @@ export async function request<T>(
   const headers: Record<string, string> = isForm ? {} : { 'Content-Type': 'application/json' };
 
   if (auth) {
-    const token = await getToken();
-    if (!token) {
-      onUnauthorized?.();
-      throw new ApiError('Please log in again.', 401);
-    }
-    headers.Authorization = `Bearer ${token}`;
+    if (blockedReason) throw new ApiError(blockedReason, 0, true);
+    headers.Authorization = `Bearer ${await getAuthToken()}`;
   }
 
   const controller = new AbortController();

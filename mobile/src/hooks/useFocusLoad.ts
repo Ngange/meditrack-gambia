@@ -2,6 +2,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { errorMessage, isAuthError } from '@/api';
+import { useSync } from '@/context/SyncContext';
 
 type State<T> = { data: T | null; loading: boolean; error: string };
 
@@ -40,16 +41,27 @@ export function useFocusLoad<T>(fetcher: () => Promise<T>) {
     }, [load]),
   );
 
+  // The saved records changed (a save, or a sync brought something in): show the new state.
+  const { dataVersion, syncNow } = useSync();
+  const seen = useRef(dataVersion);
+  useEffect(() => {
+    if (seen.current === dataVersion) return;
+    seen.current = dataVersion;
+    void load();
+  }, [dataVersion, load]);
+
   const retry = useCallback(() => {
     setState((s) => ({ ...s, loading: true, error: '' }));
     void load();
   }, [load]);
 
+  // Pull to refresh also checks with the server (when sync is on and there is a connection).
   const refresh = useCallback(async () => {
     setRefreshing(true);
+    await syncNow().catch(() => undefined);
     await load();
     setRefreshing(false);
-  }, [load]);
+  }, [load, syncNow]);
 
   const setData = useCallback((data: T) => setState({ data, loading: false, error: '' }), []);
 

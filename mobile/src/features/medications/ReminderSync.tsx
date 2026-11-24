@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 
 import { useAuth } from '@/context/AuthContext';
+import { useSync } from '@/context/SyncContext';
 
 import { medicationApi } from './api';
 
@@ -15,6 +16,7 @@ import { medicationApi } from './api';
 export function ReminderSync() {
   const { user } = useAuth();
   const userId = user?.userId;
+  const { dataVersion } = useSync(); // medicines changed (saved here, or a sync brought some): reminders follow
 
   useEffect(() => {
     if (!userId) return;
@@ -23,7 +25,7 @@ export function ReminderSync() {
     refresh();
     const sub = AppState.addEventListener('change', (state) => state === 'active' && refresh());
     return () => sub.remove();
-  }, [userId]);
+  }, [userId, dataVersion]);
 
   // Tapping a reminder (including the one that launched the app) opens the medication list.
   const response = Notifications.useLastNotificationResponse();

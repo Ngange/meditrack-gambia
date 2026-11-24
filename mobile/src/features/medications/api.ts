@@ -3,7 +3,7 @@ import { syncReminders } from '@/services/reminders';
 
 import type { Medication, MedicationInput } from './types';
 
-const base = createRecordApi<Medication, MedicationInput>('medications', 'medication');
+const base = createRecordApi<Medication, MedicationInput>('medications');
 
 export const medicationApi = {
   ...base,

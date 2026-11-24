@@ -21,4 +21,4 @@ async function record({ patientId, shareId = null, actorType, actorId = null, ac
   }
 }
 
-module.exports = { record };
+module.exports = { record, cleanIp };

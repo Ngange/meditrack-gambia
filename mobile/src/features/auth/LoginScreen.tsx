@@ -11,6 +11,8 @@ import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useFormState } from '@/hooks/useFormState';
 
+import { SavedAccounts } from '@/features/sync/SavedAccounts';
+
 import { AuthFooter } from './AuthFooter';
 import { useAuthSubmit } from './useAuthSubmit';
 import { validateLogin, type LoginErrors } from './validation';
@@ -55,6 +57,8 @@ export function LoginScreen() {
         <FormError message={formError} />
         <Button title="Log in" onPress={handleLogin} loading={loading} />
       </ThemedView>
+
+      <SavedAccounts />
 
       <AuthFooter prompt="Don't have an account?" linkLabel="Register" href="/register" />
     </KeyboardScreen>

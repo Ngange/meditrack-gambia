@@ -11,6 +11,7 @@ import { useThemeMode } from '@/context/ThemeContext';
 
 const ROWS = [
   { title: 'My profile', hint: 'Personal details and emergency contact', href: '/profile' },
+  { title: 'Sync & offline', hint: 'Work without internet, sync status and your saved data', href: '/sync' },
   { title: 'Health records', hint: 'Allergies, conditions, visits, medications and more', href: '/records' },
 ] as const;
 

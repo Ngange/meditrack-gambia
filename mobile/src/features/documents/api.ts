@@ -1,8 +1,8 @@
-import { createRecordApi, request } from '@/api';
+import { request } from '@/api';
+import { activeStore } from '@/offline/active';
 
 import type { DocumentInput, MedicalDocument } from './types';
 
-const base = createRecordApi<MedicalDocument, DocumentInput>('documents', 'document');
 
 function toForm({ file, documentType, description, documentDate, visitId, fileName }: DocumentInput) {
   const form = new FormData();
@@ -21,9 +21,16 @@ function toForm({ file, documentType, description, documentDate, visitId, fileNa
   return form;
 }
 
+// Documents are read from the phone's saved copy (their details download with every sync), but adding,
+// editing or removing one happens on the server, because the file itself lives there. Each of these needs a
+// connection; the phone's copy is updated from the server's answer.
 export const documentApi = {
-  list: base.list,
-  remove: base.remove,
+  list: () => activeStore().list<MedicalDocument>('documents'),
+
+  async remove(id: string) {
+    await request<{ deleted: boolean }>(`/records/documents/${id}`, { method: 'DELETE' });
+    await activeStore().dropLocal('documents', id);
+  },
 
   /** Uploads the chosen file with its details. A big photo on a weak connection can take a while. */
   async create(input: DocumentInput) {
@@ -32,6 +39,7 @@ export const documentApi = {
       body: toForm(input),
       timeoutMs: 90_000,
     });
+    await activeStore().putServerRecord('documents', res.document as unknown as Record<string, unknown>);
     return res.document;
   },
 
@@ -41,6 +49,7 @@ export const documentApi = {
       method: 'PUT',
       body: { documentType, description, documentDate, visitId, fileName },
     });
+    await activeStore().putServerRecord('documents', res.document as unknown as Record<string, unknown>);
     return res.document;
   },
 };

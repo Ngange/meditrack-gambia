@@ -18,7 +18,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "softwareKeyboardLayoutMode": "resize"
+      "softwareKeyboardLayoutMode": "resize",
+      "package": "com.anonymous.mobile"
     },
     "web": {
       "output": "static",
@@ -35,6 +36,12 @@
         }
       ],
       "expo-secure-store",
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ],
       "expo-notifications",
       [
         "expo-image-picker",
@@ -42,7 +49,8 @@
           "cameraPermission": "MediTrack uses the camera so you can photograph your medical documents.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -16,6 +16,30 @@ function createRecordService(model) {
     throw err.code === '22P02' ? notFound() : err;
   };
 
+  // Adds who entered each record (a doctor, or nobody if the patient did) so the patient can see it
+  // and a doctor's page knows which ones are theirs to edit.
+  async function decorate(db, rows) {
+    const dtos = rows.map(model.toDto);
+    const ids = [...new Set(rows.map((r) => r.entered_by_provider).filter(Boolean))];
+    const labels = new Map();
+    if (ids.length) {
+      const found = await db.query(
+        'SELECT provider_id, first_name, last_name, facility_name FROM provider_profile WHERE provider_id = ANY($1::uuid[])',
+        [ids],
+      );
+      for (const p of found.rows) labels.set(p.provider_id, { provider_id: p.provider_id, name: `Dr ${p.first_name} ${p.last_name}`, facility: p.facility_name });
+    }
+    return dtos.map((dto, i) => {
+      const id = rows[i].entered_by_provider;
+      return { ...dto, entered_by: id ? (labels.get(id) ?? { provider_id: id, name: 'a doctor', facility: null }) : null };
+    });
+  }
+
+  const conflictError = () => Object.assign(new AppError(409, `This ${model.label.toLowerCase()} was changed somewhere else.`), { syncConflict: true });
+
+  const duplicateError = (providerId) =>
+    new AppError(409, providerId ? "This is already in the patient's records." : duplicate.message);
+
   async function isDuplicate(client, patientId, value, excludeId) {
     const result = await client.query(
       `SELECT ${idCol}, ${duplicate.columns} FROM ${table}
@@ -33,37 +57,41 @@ function createRecordService(model) {
 
   async function list(patientId) {
     const result = await pool.query(
-      `SELECT ${selectColumns} FROM ${table}
+      `SELECT ${selectColumns}, entered_by_provider FROM ${table}
        WHERE patient_id = $1 ORDER BY ${orderBy}`,
       [patientId],
     );
-    return result.rows.map(model.toDto);
+    return decorate(pool, result.rows);
   }
 
   // Inserts one record inside a transaction the caller already holds (with the patient lock).
   // create() uses it, and so does saving a visit together with its records.
-  async function insertIn(client, patientId, value) {
+  // providerId is set when a doctor is entering the record; it is stored on the row.
+  // id is set when a phone created the record offline and chose its id (so a retried upload cannot
+  // make a second copy).
+  async function insertIn(client, patientId, value, providerId = null, id = null) {
     if (model.linksToVisit) await assertVisitOwned(client, patientId, value.visitId);
     if (await isDuplicate(client, patientId, value, null)) {
-      throw new AppError(409, duplicate.message);
+      throw duplicateError(providerId);
     }
-    const placeholders = columns.map((_, i) => `$${i + 2}`).join(', ');
+    const cols = [...(id ? [idCol] : []), ...columns, ...(providerId ? ['entered_by_provider'] : [])];
+    const placeholders = cols.map((_, i) => `$${i + 2}`).join(', ');
     const result = await client.query(
-      `INSERT INTO ${table} (patient_id, ${columns.join(', ')})
+      `INSERT INTO ${table} (patient_id, ${cols.join(', ')})
        VALUES ($1, ${placeholders})
-       RETURNING ${selectColumns}`,
-      [patientId, ...columns.map((c) => fields[c](value))],
+       RETURNING ${selectColumns}, entered_by_provider`,
+      [patientId, ...(id ? [id] : []), ...columns.map((c) => fields[c](value)), ...(providerId ? [providerId] : [])],
     );
-    return model.toDto(result.rows[0]);
+    return (await decorate(client, result.rows))[0];
   }
 
-  async function create(patientId, value) {
-    return withPatientLock(patientId, (client) => insertIn(client, patientId, value));
+  async function create(patientId, value, providerId = null) {
+    return withPatientLock(patientId, (client) => insertIn(client, patientId, value, providerId));
   }
 
   // Saves several records in one go (for example every result of one blood panel).
   // All or nothing: if any row is a duplicate, nothing is saved. Rows are numbered from 1 in errors.
-  async function createMany(patientId, values) {
+  async function createMany(patientId, values, providerId = null) {
     const rows = await withPatientLock(patientId, async (client) => {
       const seen = new Set();
       const saved = [];
@@ -74,7 +102,7 @@ function createRecordService(model) {
         }
         seen.add(scope);
         try {
-          saved.push(await insertIn(client, patientId, value));
+          saved.push(await insertIn(client, patientId, value, providerId));
         } catch (err) {
           if (err instanceof AppError && err.status === 409) throw new AppError(409, `Row ${i + 1}: ${err.message}`);
           throw err;
@@ -85,12 +113,29 @@ function createRecordService(model) {
     return rows;
   }
 
-  async function update(patientId, id, value) {
+  // actor.providerId is set when a doctor is editing: they may change only records they entered.
+  // A patient may not change a record a doctor entered (they can still delete it).
+  // actor.baseVersion is set by offline sync: the version the phone last saw. If the record has
+  // changed since, nothing is saved and a conflict error is thrown (see syncService).
+  // 422, not 401/403: those make the apps sign the user out.
+  async function update(patientId, id, value, actor = null) {
     try {
       const row = await withPatientLock(patientId, async (client) => {
+        const current = await client.query(
+          `SELECT entered_by_provider${actor?.baseVersion != null ? ', sync_version' : ''} FROM ${table} WHERE ${idCol} = $1 AND patient_id = $2 FOR UPDATE`,
+          [id, patientId],
+        );
+        if (current.rows.length === 0) return undefined;
+        if (actor?.baseVersion != null && Number(current.rows[0].sync_version) !== Number(actor.baseVersion)) throw conflictError();
+        const by = current.rows[0].entered_by_provider;
+        if (actor?.providerId) {
+          if (by !== actor.providerId) throw new AppError(422, 'You can only edit records you entered yourself.');
+        } else if (by) {
+          throw new AppError(422, 'Your doctor entered this record, so it cannot be changed. You can delete it and add your own.');
+        }
         if (model.linksToVisit) await assertVisitOwned(client, patientId, value.visitId);
         if (await isDuplicate(client, patientId, value, id)) {
-          throw new AppError(409, duplicate.message);
+          throw duplicateError(actor?.providerId);
         }
         const sets = columns.map((c, i) => `${c} = $${i + 1}`).join(', ');
         const n = columns.length;
@@ -98,19 +143,33 @@ function createRecordService(model) {
         const result = await client.query(
           `UPDATE ${table} SET ${sets}
            WHERE ${idCol} = $${n + 1} AND patient_id = $${n + 2}
-           RETURNING ${selectColumns}`,
+           RETURNING ${selectColumns}, entered_by_provider`,
           [...columns.map((c) => fields[c](value)), id, patientId],
         );
-        return result.rows[0];
+        return (await decorate(client, result.rows))[0];
       });
       if (!row) throw notFound();
-      return model.toDto(row);
+      return row;
     } catch (err) {
       return asNotFound(err);
     }
   }
 
-  async function remove(patientId, id) {
+  // options.baseVersion is set by offline sync: if the record changed after the phone last saw it,
+  // it is not deleted and a conflict error is thrown (a change somewhere else wins over a delete).
+  async function remove(patientId, id, { baseVersion = null } = {}) {
+    if (baseVersion != null) {
+      try {
+        return await withPatientLock(patientId, async (client) => {
+          const current = await client.query(`SELECT sync_version FROM ${table} WHERE ${idCol} = $1 AND patient_id = $2 FOR UPDATE`, [id, patientId]);
+          if (current.rows.length === 0) throw notFound();
+          if (Number(current.rows[0].sync_version) !== Number(baseVersion)) throw conflictError();
+          await client.query(`DELETE FROM ${table} WHERE ${idCol} = $1 AND patient_id = $2`, [id, patientId]);
+        });
+      } catch (err) {
+        return asNotFound(err);
+      }
+    }
     try {
       const result = await pool.query(
         `DELETE FROM ${table} WHERE ${idCol} = $1 AND patient_id = $2 RETURNING ${idCol}`,
@@ -122,7 +181,7 @@ function createRecordService(model) {
     }
   }
 
-  return { list, create, createMany, insertIn, update, remove };
+  return { list, create, createMany, insertIn, update, remove, decorate };
 }
 
 module.exports = createRecordService;

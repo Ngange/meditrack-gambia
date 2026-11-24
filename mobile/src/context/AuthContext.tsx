@@ -1,14 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
-import { login, register, setUnauthorizedHandler, type AuthResponse, type AuthUser } from '@/api';
+import { setUnauthorizedHandler, type AuthUser } from '@/api';
+import { bindSession, session } from '@/offline/appSession';
 import { clearReminders } from '@/services/reminders';
-import { clearToken, saveToken } from '@/utils/token-storage';
-
-import { restoreSession } from './restoreSession';
 
 type AuthContextValue = {
   user: AuthUser | null;
   isLoading: boolean;
+  /** True when the account was opened without a connection (the saved password check, not the server). */
+  openedOffline: boolean;
+  /** The saved data could not be opened and was replaced by an empty copy that is downloading again. */
+  recovered: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -16,17 +18,24 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const toUser = (a: { userId: string; email: string }): AuthUser => ({ userId: a.userId, email: a.email, role: 'patient' });
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [openedOffline, setOpenedOffline] = useState(false);
+  const [recovered, setRecovered] = useState(false);
 
+  // Signing out keeps the account's data on the phone (encrypted); only the login and reminders go.
   const signOut = useCallback(async () => {
-    await clearToken();
+    await session.signOut();
+    await bindSession();
     await clearReminders(); // the next person on this phone must not get this patient's reminders
+    setOpenedOffline(false);
     setUser(null);
   }, []);
 
-  // Any request the server rejects with 401/403 ends up here, from any screen.
+  // A request the server rejects with 401/403 (a revoked or tampered login) ends up here, from any screen.
   useEffect(() => {
     setUnauthorizedHandler(() => {
       void signOut();
@@ -34,13 +43,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setUnauthorizedHandler(null);
   }, [signOut]);
 
+  // The app opens straight from what is saved on the phone: no connection is needed to get in.
   useEffect(() => {
     let cancelled = false;
-    restoreSession()
+    session
+      .restore()
       .catch(() => null)
-      .then((restored) => {
+      .then(async (restored) => {
+        await bindSession();
         if (cancelled) return;
-        setUser(restored);
+        if (restored) {
+          setUser(toUser(restored.account));
+          setRecovered(restored.recovered);
+        }
         setIsLoading(false);
       });
     return () => {
@@ -48,24 +63,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  async function startSession(result: AuthResponse) {
-    await saveToken(result.token);
-    setUser(result.user);
+  async function opened(outcome: Awaited<ReturnType<typeof session.signIn>>) {
+    await bindSession();
+    setOpenedOffline(outcome.mode === 'offline');
+    setRecovered(outcome.recovered);
+    setUser(toUser(outcome.account));
   }
 
-  const signIn: AuthContextValue['signIn'] = async (email, password) => {
-    const result = await login(email, password);
-    // The phone app is for patients. Nothing is saved for anyone else, so no half-signed-in state is left behind.
-    if (result.user.role === 'provider') throw new Error('Doctor accounts use the MediTrack web app. Please log in there.');
-    if (result.user.role !== 'patient') throw new Error('This app is for patients.');
-    return startSession(result);
-  };
+  const signIn: AuthContextValue['signIn'] = async (email, password) => opened(await session.signIn(email, password));
 
   const signUp: AuthContextValue['signUp'] = async (email, password, firstName, lastName) =>
-    startSession(await register(email, password, firstName, lastName));
+    opened(await session.signUp(email, password, firstName, lastName));
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, signUp, signOut }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, isLoading, openedOffline, recovered, signIn, signUp, signOut }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 
