@@ -20,3 +20,16 @@
 .sh-hist-item:first-child { border-top: 0; padding-top: 0; }
 .sh-hist-item.warn strong::before { content: '⚠ '; }
 .sh-hist-live { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+.sh-qr { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 8px 0 12px; }
+.sh-qr p { margin: 0; max-width: 340px; }
+.sh-qr-sheet { display: none; }
+@media print {
+  /* "Print QR": show only the sheet, centred on the page. */
+  body.sh-print-qr *, body.sh-print-standing * { visibility: hidden; }
+  body.sh-print-qr .sh-qr-sheet:not(.sh-qr-sheet-standing), body.sh-print-qr .sh-qr-sheet:not(.sh-qr-sheet-standing) *,
+  body.sh-print-standing .sh-qr-sheet-standing, body.sh-print-standing .sh-qr-sheet-standing * { visibility: visible; }
+  body.sh-print-qr .sh-qr-sheet:not(.sh-qr-sheet-standing), body.sh-print-standing .sh-qr-sheet-standing { display: grid; justify-items: center; gap: 10px; position: absolute; left: 0; right: 0; top: 24mm; text-align: center; color: #111827; background: #fff; font-size: 14pt; }
+  body.sh-print-qr .sh-qr-sheet h2, body.sh-print-standing .sh-qr-sheet h2 { font-size: 22pt; margin: 0; }
+  body.sh-print-qr .sh-qr-sheet p, body.sh-print-standing .sh-qr-sheet p { margin: 0; }
+}

@@ -16,3 +16,7 @@
 .dr-tab { font: inherit; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--a-border); background: var(--a-surface); color: var(--a-text); cursor: pointer; }
 .dr-tab.is-on { background: var(--a-primary); color: var(--a-on-primary); border-color: transparent; font-weight: 600; }
 .dr-page { max-width: 760px; display: grid; gap: 18px; }
+
+.dr-scan { margin: 8px 0 12px; max-width: 420px; }
+.dr-scan video { width: 100%; border-radius: 10px; background: #000; display: block; }
+.dr-photo { cursor: pointer; }

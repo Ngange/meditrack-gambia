@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const pool = require('../config/db');
 const env = require('../config/env');
 const AppError = require('../utils/AppError');
@@ -9,6 +10,14 @@ const { withPatientLock } = require('./patientService');
 const audit = require('./auditService');
 
 const MAX_ACTIVE_LINKS = 20;
+// The permanent QR code: a share of everything, with no end date, that the patient can reset.
+const STANDING_TYPES = ['allergies', 'conditions', 'visits', 'medications', 'lab_results', 'documents', 'emergency_contact'];
+const STANDING_ENDS = '9999-12-31T00:00:00Z';
+// Its secret is worked out from the master key (which never leaves the server) plus the patient and a version
+// number, so nothing readable is stored and the QR can still be shown again. Resetting bumps the version.
+const standingToken = (patientId, version) =>
+  crypto.createHmac('sha256', env.masterKey).update(`standing-qr:${patientId}:${version}`).digest('base64url');
+
 const NOT_AVAILABLE = () => new AppError(404, 'This link is not available.');
 
 // A link works while it is not revoked, not expired and (if it has a limit) not used up.
@@ -31,7 +40,7 @@ async function create(patientId, { recordTypes, seconds }) {
   const token = generateToken();
   const row = await withPatientLock(patientId, async (client) => {
     const active = await client.query(
-      `SELECT count(*)::int AS n FROM record_shares WHERE patient_id = $1 AND ${IS_ACTIVE}`,
+      `SELECT count(*)::int AS n FROM record_shares WHERE patient_id = $1 AND NOT standing AND ${IS_ACTIVE}`,
       [patientId],
     );
     if (active.rows[0].n >= MAX_ACTIVE_LINKS) {
@@ -57,7 +66,7 @@ async function list(patientId) {
   // Keep the stored status honest for anything else that reads the table.
   await pool.query(
     `UPDATE record_shares SET status = 'expired'
-     WHERE patient_id = $1 AND status = 'active' AND revoked_at IS NULL AND expires_at <= now()`,
+     WHERE patient_id = $1 AND NOT standing AND status = 'active' AND revoked_at IS NULL AND expires_at <= now()`,
     [patientId],
   );
   const result = await pool.query(
@@ -68,11 +77,51 @@ async function list(patientId) {
             (SELECT max(a.occurred_at) FROM audit_logs a
               WHERE a.share_id = s.share_id AND a.record_type = 'share_page') AS last_viewed_at
      FROM record_shares s
-     WHERE s.patient_id = $1
+     WHERE s.patient_id = $1 AND NOT s.standing
      ORDER BY s.granted_at DESC`,
     [patientId],
   );
   return result.rows.map(toDto);
+}
+
+const standingDto = (row, last) => ({
+  share_id: row.share_id,
+  url: `${env.publicWebUrl}/s/${standingToken(row.patient_id, row.standing_version)}`,
+  created_at: row.granted_at,
+  view_count: row.view_count,
+  last_viewed_at: last ?? null,
+});
+
+// Makes the permanent QR the first time it is asked for. The row is the only thing stored; see standingToken.
+async function ensureStanding(client, patientId) {
+  const found = await client.query(`SELECT * FROM record_shares WHERE patient_id = $1 AND standing AND revoked_at IS NULL`, [patientId]);
+  if (found.rows[0]) return found.rows[0];
+  const version = (await client.query(`SELECT COALESCE(max(standing_version), 0) + 1 AS v FROM record_shares WHERE patient_id = $1 AND standing`, [patientId])).rows[0].v;
+  const result = await client.query(
+    `INSERT INTO record_shares (patient_id, token_hash, record_types, expires_at, standing, standing_version)
+     VALUES ($1, $2, $3, $4, true, $5) RETURNING *`,
+    [patientId, hashToken(standingToken(patientId, version)), STANDING_TYPES, STANDING_ENDS, version],
+  );
+  return result.rows[0];
+}
+
+async function lastScan(shareId) {
+  const r = await pool.query(`SELECT max(occurred_at) AS at FROM audit_logs WHERE share_id = $1 AND record_type = 'share_page'`, [shareId]);
+  return r.rows[0].at;
+}
+
+async function getStanding(patientId) {
+  const row = await withPatientLock(patientId, (client) => ensureStanding(client, patientId));
+  return standingDto(row, await lastScan(row.share_id));
+}
+
+// Switches the old QR off for good and makes a new one. A printed or photographed copy of the old one stops working.
+async function resetStanding(patientId) {
+  const row = await withPatientLock(patientId, async (client) => {
+    await client.query(`UPDATE record_shares SET revoked_at = now(), status = 'revoked' WHERE patient_id = $1 AND standing AND revoked_at IS NULL`, [patientId]);
+    return ensureStanding(client, patientId);
+  });
+  return standingDto(row, null);
 }
 
 // Stops a link working right now. Revoking twice is harmless.
@@ -81,7 +130,7 @@ async function revoke(patientId, shareId) {
     .query(
       `UPDATE record_shares
        SET revoked_at = COALESCE(revoked_at, now()), status = 'revoked'
-       WHERE share_id = $1 AND patient_id = $2
+       WHERE share_id = $1 AND patient_id = $2 AND NOT standing
        RETURNING share_id`,
       [shareId, patientId],
     )
@@ -112,7 +161,7 @@ async function open(token, ip) {
   const opened = await pool.query(
     `UPDATE record_shares SET view_count = view_count + 1
      WHERE token_hash = $1 AND ${IS_ACTIVE}
-     RETURNING share_id, patient_id, record_types, expires_at`,
+     RETURNING share_id, patient_id, record_types, expires_at, standing`,
     [hashToken(token)],
   );
   if (opened.rows.length === 0) throw NOT_AVAILABLE();
@@ -138,7 +187,8 @@ async function open(token, ip) {
   for (const type of share.record_types) {
     if (SECTION_LOADERS[type]) sections[type] = await SECTION_LOADERS[type](share.patient_id);
   }
-  return { patient, expires_at: share.expires_at, record_types: share.record_types, sections };
+  // A permanent QR has no end date; the page says so instead of showing the placeholder date.
+  return { patient, expires_at: share.standing ? null : share.expires_at, standing: share.standing, record_types: share.record_types, sections };
 }
 
 // A document file from a shared page. Only if the link includes documents, and only the patient's own.
@@ -156,4 +206,4 @@ async function openDocument(token, documentId, ip) {
   return file;
 }
 
-module.exports = { create, list, revoke, open, openDocument, MAX_ACTIVE_LINKS };
+module.exports = { create, list, revoke, open, openDocument, getStanding, resetStanding, MAX_ACTIVE_LINKS };

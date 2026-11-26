@@ -1,3 +1,4 @@
+import { Link } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 
@@ -61,6 +62,13 @@ export function LoginScreen() {
       <SavedAccounts />
 
       <AuthFooter prompt="Don't have an account?" linkLabel="Register" href="/register" />
+
+      <ThemedView style={styles.doctor}>
+        <ThemedText themeColor="textSecondary">Are you a doctor?</ThemedText>
+        <Link href={'/doctor-login' as never}>
+          <ThemedText type="linkPrimary">Doctor log in</ThemedText>
+        </Link>
+      </ThemedView>
     </KeyboardScreen>
   );
 }
@@ -68,4 +76,5 @@ export function LoginScreen() {
 const styles = StyleSheet.create({
   heading: { gap: Spacing.one },
   form: { gap: Spacing.three },
+  doctor: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.one },
 });

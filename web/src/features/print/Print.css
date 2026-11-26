@@ -1,0 +1,28 @@
+/* A record sheet is paper: always dark text on white, whatever theme the app is in. */
+.pr-page { min-height: 100vh; background: #eef1f6; padding: 16px; color: #111827; }
+.pr-toolbar { max-width: 210mm; margin: 0 auto 12px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; font-family: inherit; }
+.pr-toolbar .pr-hint { color: #5b6475; font-size: 0.9rem; margin: 0; }
+.pr-sheet { max-width: 210mm; margin: 0 auto; background: #fff; color: #111827; padding: 14mm; box-shadow: 0 1px 6px rgba(16, 24, 40, 0.12); font-size: 11pt; line-height: 1.35; }
+.pr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; border-bottom: 2px solid #111827; padding-bottom: 8px; margin-bottom: 14px; }
+.pr-brand { font-size: 14pt; }
+.pr-printed { font-size: 9.5pt; color: #444; text-align: right; }
+.pr-patient h1 { margin: 0 0 6px; font-size: 20pt; }
+.pr-patient dl { display: flex; flex-wrap: wrap; gap: 6px 28px; margin: 0 0 6px; }
+.pr-patient dt { font-size: 9pt; color: #555; text-transform: uppercase; letter-spacing: 0.04em; }
+.pr-patient dd { margin: 0; font-weight: 600; }
+.pr-note { font-size: 9.5pt; color: #444; margin: 6px 0 0; }
+.pr-block { margin-top: 14px; break-inside: auto; }
+.pr-block h2 { font-size: 12.5pt; margin: 0 0 4px; padding-bottom: 2px; border-bottom: 1px solid #999; }
+.pr-block table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+.pr-block th { text-align: left; font-weight: 700; background: #f0f0f0; }
+.pr-block th, .pr-block td { padding: 3px 6px; border: 1px solid #bbb; vertical-align: top; }
+.pr-block tr { break-inside: avoid; }
+.pr-none { margin: 4px 0; color: #555; font-style: italic; }
+.pr-foot { margin-top: 18px; padding-top: 6px; border-top: 1px solid #999; font-size: 9pt; color: #555; }
+
+@page { size: A4; margin: 12mm; }
+@media print {
+  .pr-noprint { display: none !important; }
+  .pr-page { background: #fff; padding: 0; }
+  .pr-sheet { box-shadow: none; padding: 0; max-width: none; }
+}

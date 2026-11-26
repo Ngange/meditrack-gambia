@@ -89,6 +89,9 @@ function Open({ sessionId, data, providerId }: { sessionId: string; data: Loaded
             Access ends in
           </div>
           <strong className="dr-clock">{formatRemaining(left)}</strong>
+          <Link className="a-btn a-btn-sm" to={`/patient/${sessionId}/print`}>
+            Print record
+          </Link>
           <button type="button" className="a-btn a-btn-sm" onClick={end} disabled={ending}>
             {ending ? 'Ending…' : 'End access'}
           </button>

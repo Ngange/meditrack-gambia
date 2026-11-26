@@ -4,6 +4,7 @@ import { formatDate } from '../../utils/dates';
 import type { DoctorContext } from './DoctorShell';
 import { OpenPatientCard } from './OpenPatientCard';
 import { OpenSessions } from './OpenSessions';
+import { ScanQrCard } from './ScanQrCard';
 import './Doctor.css';
 
 // The doctor's home. For now it shows who they are and whether an admin has verified them.
@@ -15,6 +16,7 @@ export function DoctorHomePage() {
     <div className="dr-page">
       {status === 'verified' && (
         <>
+          <ScanQrCard />
           <OpenPatientCard />
           <OpenSessions />
         </>

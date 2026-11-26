@@ -1,6 +1,6 @@
 import { request } from '@/api';
 
-import type { CreatedShare, Share, ShareDuration, ShareSection } from './types';
+import type { CreatedShare, StandingQr, Share, ShareDuration, ShareSection } from './types';
 
 export const shareApi = {
   async list() {
@@ -10,6 +10,16 @@ export const shareApi = {
 
   create(recordTypes: ShareSection[], duration: ShareDuration) {
     return request<CreatedShare>('/shares', { method: 'POST', body: { recordTypes, duration } });
+  },
+
+  /** The permanent QR address (made the first time it is asked for). */
+  standing() {
+    return request<StandingQr>('/shares/standing');
+  },
+
+  /** Switches the old QR off for good and returns a new one. */
+  resetStanding() {
+    return request<StandingQr>('/shares/standing/reset', { method: 'POST' });
   },
 
   async revoke(id: string) {

@@ -31,3 +31,6 @@ export type Share = {
 
 /** The reply to making a link. The address (and its secret) is shown once and never stored. */
 export type CreatedShare = { share: Share; token: string; url: string };
+
+/** The patient's permanent QR. The address is the same every time until the patient resets it. */
+export type StandingQr = { share_id: string; url: string; created_at: string; view_count: number; last_viewed_at: string | null };

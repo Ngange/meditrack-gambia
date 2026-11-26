@@ -1,4 +1,4 @@
-import type { CreatedShare, Share, ShareInput } from '../types/records';
+import type { CreatedShare, Share, ShareInput, StandingQr } from '../types/records';
 import { request } from './client';
 
 // The patient's side: make, list and revoke share links.
@@ -10,6 +10,16 @@ export const sharesApi = {
 
   create(input: ShareInput) {
     return request<CreatedShare>('/shares', { method: 'POST', body: input });
+  },
+
+  /** The permanent QR. Made the first time it is asked for, and the same address every time after. */
+  standing() {
+    return request<StandingQr>('/shares/standing');
+  },
+
+  /** Switches the old QR off for good and returns a new one. */
+  resetStanding() {
+    return request<StandingQr>('/shares/standing/reset', { method: 'POST' });
   },
 
   async revoke(id: string) {

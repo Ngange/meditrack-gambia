@@ -2,6 +2,7 @@ const pool = require('../config/db');
 const AppError = require('../utils/AppError');
 const { withPatientLock } = require('./patientService');
 const pinService = require('./pinService');
+const { hashToken, looksLikeToken } = require('../utils/shareToken');
 const audit = require('./auditService');
 
 const SESSION_MINUTES = 60;
@@ -28,23 +29,18 @@ const toDto = (r) => ({
 const SESSION_SELECT = `SELECT s.session_id, s.started_at, s.expires_at, s.patient_id, p.first_name, p.last_name, p.blood_group
                           FROM provider_sessions s JOIN patient_profile p ON p.patient_id = s.patient_id`;
 
-// The doctor types a patient's code and PIN. If right, they get one hour with that patient.
-async function open({ providerId, userId, code, pin, ip }) {
-  await assertVerified(providerId);
-  // Counts wrong tries, locks after 5, and logs every attempt (see pinService).
-  const { patientId } = await pinService.verify({ code, pin, providerId, ip });
-
+// Starts one hour with a patient. One live session per doctor and patient: opening again replaces the old one.
+async function startSession({ providerId, userId, patientId, via, ip }) {
   const sessionId = await withPatientLock(patientId, async (client) => {
-    // One live session per doctor and patient: opening again replaces the old one.
     await client.query(
       `UPDATE provider_sessions SET ended_at = now(), ended_by = 'replaced'
         WHERE provider_id = $1 AND patient_id = $2 AND ${ACTIVE}`,
       [providerId, patientId],
     );
     const inserted = await client.query(
-      `INSERT INTO provider_sessions (provider_id, patient_id, expires_at, ip_address)
-       VALUES ($1, $2, now() + make_interval(mins => $3), $4) RETURNING session_id`,
-      [providerId, patientId, SESSION_MINUTES, audit.cleanIp(ip)],
+      `INSERT INTO provider_sessions (provider_id, patient_id, expires_at, ip_address, opened_via)
+       VALUES ($1, $2, now() + make_interval(mins => $3), $4, $5) RETURNING session_id`,
+      [providerId, patientId, SESSION_MINUTES, audit.cleanIp(ip), via],
     );
     return inserted.rows[0].session_id;
   });
@@ -52,6 +48,33 @@ async function open({ providerId, userId, code, pin, ip }) {
   await audit.record({ patientId, actorType: 'provider', actorId: userId, action: 'view', recordType: 'access_session', ip });
   const { rows } = await pool.query(`${SESSION_SELECT} WHERE s.session_id = $1`, [sessionId]);
   return toDto(rows[0]);
+}
+
+// The doctor types a patient's code and PIN. If right, they get one hour with that patient.
+async function open({ providerId, userId, code, pin, ip }) {
+  await assertVerified(providerId);
+  // Counts wrong tries, locks after 5, and logs every attempt (see pinService).
+  const { patientId } = await pinService.verify({ code, pin, providerId, ip });
+  return startSession({ providerId, userId, patientId, via: 'pin', ip });
+}
+
+// The doctor scans the patient's permanent QR code. The QR is the patient's own choice to be reachable by a
+// scan alone, so there is no PIN; the doctor must still be a verified doctor, the hour is the same, every
+// change is logged under the doctor's name, and the patient sees "by scanning your QR code". A QR that was
+// reset, or that never existed, gets the same answer.
+async function openByQr({ providerId, userId, token, ip }) {
+  await assertVerified(providerId);
+  const invalid = () => new AppError(404, 'This QR code is not valid any more. Ask the patient to show their current one.');
+  if (!looksLikeToken(token)) throw invalid();
+  const found = await pool.query(
+    `UPDATE record_shares SET view_count = view_count + 1
+      WHERE token_hash = $1 AND standing AND revoked_at IS NULL RETURNING share_id, patient_id`,
+    [hashToken(token)],
+  );
+  const share = found.rows[0];
+  if (!share) throw invalid();
+  await audit.record({ patientId: share.patient_id, shareId: share.share_id, actorType: 'provider', actorId: userId, action: 'view', recordType: 'share_page', ip });
+  return startSession({ providerId, userId, patientId: share.patient_id, via: 'qr', ip });
 }
 
 // The doctor's open sessions, soonest to run out first.
@@ -98,4 +121,4 @@ async function getPatientBasics(patientId) {
   return rows[0];
 }
 
-module.exports = { open, listActive, getActive, end, getPatientBasics, assertVerified, SESSION_MINUTES };
+module.exports = { open, openByQr, listActive, getActive, end, getPatientBasics, assertVerified, SESSION_MINUTES };

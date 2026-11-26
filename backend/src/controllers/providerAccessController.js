@@ -18,6 +18,12 @@ module.exports = {
     res.status(201).json({ session });
   }),
 
+  // The doctor scanned the patient's permanent QR code.
+  openQr: asyncHandler('Could not open the record.', async (req, res) => {
+    const session = await service.openByQr({ providerId: req.providerId, userId: req.user.userId, token: req.body?.token, ip: req.ip });
+    res.status(201).json({ session });
+  }),
+
   list: asyncHandler('Could not load your open records.', async (req, res) => {
     res.json({ sessions: await service.listActive(req.providerId) });
   }),
@@ -27,6 +33,13 @@ module.exports = {
     const patient = await service.getPatientBasics(req.patientId);
     await audit.record({ patientId: req.patientId, actorType: 'provider', actorId: req.user.userId, action: 'view', recordType: 'patient_profile', ip: req.ip });
     res.json({ session: { session_id: req.session.session_id, started_at: req.session.started_at, expires_at: req.session.expires_at }, patient });
+  }),
+
+  // The doctor printed the record. Printing happens in the browser, so the page tells us; the patient
+  // sees it in their access history.
+  printed: asyncHandler('Could not log the print.', async (req, res) => {
+    await audit.record({ patientId: req.patientId, actorType: 'provider', actorId: req.user.userId, action: 'print', recordType: 'full_record', ip: req.ip });
+    res.json({ logged: true });
   }),
 
   end: asyncHandler('Could not end access.', async (req, res) => {

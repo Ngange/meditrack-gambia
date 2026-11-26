@@ -21,7 +21,7 @@ function ActiveRow({ item, onEnd, busy }: { item: ActiveAccess; onEnd: (a: Activ
             {item.facility ? `, ${item.facility}` : ''}
           </strong>
           <div className="a-meta">
-            Opened {when(item.started_at)} · {left > 0 ? `${formatRemaining(left)} left` : 'ending now'}
+            Opened {when(item.started_at)}{item.via === 'qr' ? ' by scanning your QR code' : ''} · {left > 0 ? `${formatRemaining(left)} left` : 'ending now'}
           </div>
         </div>
         <button type="button" className="a-btn a-btn-sm a-btn-danger" onClick={() => onEnd(item)} disabled={busy} aria-label={`End access for ${item.doctor}`}>

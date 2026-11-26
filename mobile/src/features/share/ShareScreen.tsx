@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { DangerLink } from '@/components/ui/danger-link';
+import { QrCode } from '@/components/ui/qr-code';
 import { ErrorNotice } from '@/components/ui/error-notice';
 import { FormError } from '@/components/ui/form-error';
 import { Spacing } from '@/constants/theme';
@@ -16,6 +17,7 @@ import { confirmDestructive } from '@/utils/confirm';
 
 import { AccessCard } from './AccessCard';
 import { AccessHistoryCard } from './AccessHistoryCard';
+import { StandingQrCard } from './StandingQrCard';
 import { shareApi } from './api';
 import { sendLink } from './sendLink';
 import {
@@ -120,6 +122,7 @@ export function ShareScreen() {
       </ThemedText>
 
       <AccessCard />
+      <StandingQrCard />
       <AccessHistoryCard />
 
       <ThemedText type="subtitle" accessibilityRole="header">
@@ -134,6 +137,12 @@ export function ShareScreen() {
           <ThemedText type="smallBold">Your link is ready</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             Send it now. For your safety it is shown only once.
+          </ThemedText>
+          <ThemedView style={styles.qr}>
+            <QrCode value={created.url} size={240} label="QR code for the share link" />
+          </ThemedView>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.qrNote}>
+            The doctor can scan this with their phone camera. It opens the same read-only page, with no app and no login.
           </ThemedText>
           <ThemedText selectable type="small" style={styles.url}>
             {created.url}
@@ -182,4 +191,6 @@ const styles = StyleSheet.create({
   form: { gap: Spacing.three, backgroundColor: 'transparent' },
   row: { flexDirection: 'row', gap: Spacing.two, flexWrap: 'wrap' },
   url: { fontFamily: 'monospace' },
+  qr: { alignItems: 'center', paddingVertical: 8 },
+  qrNote: { textAlign: 'center' },
 });

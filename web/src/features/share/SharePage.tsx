@@ -4,6 +4,8 @@ import { sharesApi } from '../../api/shares';
 import { ErrorCard } from '../../components/ui/ErrorCard';
 import { Loading } from '../../components/ui/Loading';
 import { Pill } from '../../components/ui/Pill';
+import { QrCode } from '../../components/ui/QrCode';
+import { StandingQrCard } from './StandingQrCard';
 import { useFetch } from '../../hooks/useFetch';
 import type { CreatedShare, Share, ShareDuration, ShareSection } from '../../types/records';
 import { AccessCard } from './AccessCard';
@@ -64,6 +66,17 @@ export function SharePage() {
     }
   }
 
+  // Prints only the QR sheet: while the body carries this class, print.css hides everything else.
+  function printQr() {
+    document.body.classList.add('sh-print-qr');
+    const done = () => {
+      document.body.classList.remove('sh-print-qr');
+      window.removeEventListener('afterprint', done);
+    };
+    window.addEventListener('afterprint', done);
+    window.print();
+  }
+
   async function copy() {
     if (!created) return;
     try {
@@ -95,6 +108,7 @@ export function SharePage() {
       </header>
 
       <AccessCard />
+      <StandingQrCard />
       <AccessHistoryCard />
 
       <section className="a-card sh-form" aria-label="Send a link">
@@ -137,16 +151,33 @@ export function SharePage() {
         <section className="a-card sh-created" aria-label="New link">
           <h2>Your link is ready</h2>
           <p className="a-muted">Copy it now. For your safety it is shown only once.</p>
+          <div className="sh-qr">
+            <QrCode value={created.url} size={200} label="QR code for the share link" />
+            <p className="a-muted">Or let the doctor scan this with their phone camera. It opens the same read-only page, with no app and no login.</p>
+          </div>
           <input className="sh-url" readOnly value={created.url} onFocus={(e) => e.currentTarget.select()} aria-label="Share link" />
           <div className="a-actions">
             <button type="button" className="a-btn a-btn-dark" onClick={copy}>
               {copied ? 'Copied ✓' : 'Copy link'}
+            </button>
+            <button type="button" className="a-btn" onClick={printQr}>
+              Print QR
             </button>
             <button type="button" className="a-btn" onClick={() => setCreated(null)}>
               Done
             </button>
           </div>
         </section>
+      )}
+
+      {created && (
+        <div className="sh-qr-sheet" aria-hidden>
+          <h2>MediTrack Gambia</h2>
+          <p>Scan to see a shared medical record (read only)</p>
+          <QrCode value={created.url} size={320} label="QR code for the share link" />
+          <p>Shared: {created.share.record_types.map((t) => LABELS[t] ?? t).join(', ')}</p>
+          <p>Works until {when(created.share.expires_at)}</p>
+        </div>
       )}
 
       <section aria-label="Your links">

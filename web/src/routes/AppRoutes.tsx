@@ -18,6 +18,7 @@ import { TimelinePage } from '../features/timeline/TimelinePage';
 import { SharePage } from '../features/share/SharePage';
 import { SharedViewPage } from '../features/shared-view/SharedViewPage';
 import { VisitsPage } from '../features/visits/VisitsPage';
+import { DoctorPrintPage, PatientPrintPage } from '../features/print/PrintPages';
 import { useAuth } from '../hooks/useAuth';
 
 export function AppRoutes() {
@@ -37,9 +38,11 @@ export function AppRoutes() {
         <Route element={<DoctorShell />}>
           <Route path="/" element={<DoctorHomePage />} />
           <Route path="/patient/:sessionId" element={<DoctorPatientPage />} />
+          <Route path="/patient/:sessionId/print" element={<DoctorPrintPage />} />
         </Route>
       )}
       {user?.role === 'admin' && <Route path="/" element={<AdminNoticePage />} />}
+      {user?.role === 'patient' && <Route path="/print" element={<PatientPrintPage />} />}
       {user?.role === 'patient' && (
         <Route element={<AppShell />}>
           <Route path="/" element={<DashboardPage />} />

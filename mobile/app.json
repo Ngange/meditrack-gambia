@@ -19,6 +19,9 @@
       },
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "package": "com.anonymous.mobile"
     },
     "web": {
@@ -50,7 +53,16 @@
           "microphonePermission": false
         }
       ],
-      "expo-sqlite"
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "MediTrack uses the camera so a doctor can scan a patient's QR code.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-build-properties",
+      ["expo-build-properties", { "android": { "usesCleartextTraffic": true } }]
     ],
     "experiments": {
       "typedRoutes": true,

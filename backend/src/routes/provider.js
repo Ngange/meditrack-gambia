@@ -25,6 +25,7 @@ router.use(requireAuth, requireRole('provider'), requireProvider);
 
 // Opening a patient. Wrong PINs are also counted per patient (5 locks it); this limit is per IP on top.
 router.post('/access', rateLimit({ windowMs: 10 * 60 * 1000, max: 20, onlyFailures: true }), controller.open);
+router.post('/access/qr', rateLimit({ windowMs: 10 * 60 * 1000, max: 20, onlyFailures: true }), controller.openQr);
 router.get('/sessions', controller.list);
 
 // Ending a session needs no checks beyond ownership, so it works even if the session already ran out,
@@ -34,6 +35,7 @@ router.delete('/sessions/:sid', controller.end);
 // Everything below is about one open session, and so one patient.
 router.use('/sessions/:sid', requireSession);
 router.get('/sessions/:sid', controller.get);
+router.post('/sessions/:sid/print', controller.printed);
 
 // A doctor can read, add, and edit what they entered. There is no delete route on purpose.
 function mountRecords(path, model, validator, batchValidator) {

@@ -12,6 +12,15 @@ module.exports = {
     res.json({ shares: await service.list(req.patientId) });
   }),
 
+  // The permanent QR: shown any time, made on first use.
+  standing: asyncHandler('Could not load your QR code.', async (req, res) => {
+    res.json(await service.getStanding(req.patientId));
+  }),
+
+  resetStanding: asyncHandler('Could not reset your QR code.', async (req, res) => {
+    res.json(await service.resetStanding(req.patientId));
+  }),
+
   revoke: asyncHandler('Could not revoke the link.', async (req, res) => {
     await service.revoke(req.patientId, req.params.id);
     res.json({ revoked: true });

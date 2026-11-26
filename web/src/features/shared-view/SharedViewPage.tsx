@@ -5,6 +5,7 @@ import logo from '../../assets/logo.jpg';
 import { ErrorCard } from '../../components/ui/ErrorCard';
 import { ThemeToggle } from '../../components/ui/ThemeToggle';
 import { Loading } from '../../components/ui/Loading';
+import { PrintSheet } from '../print/PrintSheet';
 import { useFetch } from '../../hooks/useFetch';
 import { AllergiesSection, ConditionsSection, DocumentsSection, LabResultsSection, MedicationsSection, VisitsSection } from './SharedSections';
 import './SharedView.css';
@@ -75,7 +76,7 @@ export function SharedViewPage() {
             </section>
 
             <p className="a-muted sv-expiry">
-              The patient shared this with you. The link works until {formatWhen(data.expires_at)}.{' '}
+              The patient shared this with you. {data.expires_at ? `The link works until ${formatWhen(data.expires_at)}.` : 'This is their permanent QR code: it works until they reset it.'}{' '}
               <button type="button" className="a-btn a-btn-sm sv-noprint" onClick={() => window.print()}>
                 Print
               </button>
@@ -87,6 +88,11 @@ export function SharedViewPage() {
             {s?.medications && <MedicationsSection items={s.medications} />}
             {s?.lab_results && <LabResultsSection items={s.lab_results} />}
             {s?.documents && <DocumentsSection token={token} items={s.documents} />}
+
+            {/* What comes out of the printer: only the sections the patient chose to share. */}
+            <div className="sv-print-only">
+              <PrintSheet patient={data.patient} sections={data.sections} note={data.expires_at ? `Shared by the patient. The link works until ${formatWhen(data.expires_at)}.` : 'Shared by the patient with their permanent QR code.'} />
+            </div>
           </>
         )}
       </main>

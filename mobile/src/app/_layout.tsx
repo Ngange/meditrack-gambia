@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { Colors } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { DoctorProvider } from '@/context/DoctorContext';
 import { SyncProvider } from '@/context/SyncContext';
 import { AppThemeProvider } from '@/context/ThemeContext';
 import { ReminderSync } from '@/features/medications/ReminderSync';
@@ -47,9 +48,11 @@ function ThemedApp() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AnimatedSplashOverlay />
       <AuthProvider>
-        <SyncProvider>
-          <RootNavigator />
-        </SyncProvider>
+        <DoctorProvider>
+          <SyncProvider>
+            <RootNavigator />
+          </SyncProvider>
+        </DoctorProvider>
       </AuthProvider>
     </ThemeProvider>
   );

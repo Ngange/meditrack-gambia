@@ -13,6 +13,12 @@ export const providerApi = {
     return data.session;
   },
 
+  /** The doctor scanned the patient's permanent QR. Same hour of access as the PIN, with no PIN. */
+  async openByQr(token: string) {
+    const data = await request<{ session: ProviderSession }>('/provider/access/qr', { method: 'POST', body: { token } });
+    return data.session;
+  },
+
   async sessions() {
     const data = await request<{ sessions: ProviderSession[] }>('/provider/sessions');
     return data.sessions;

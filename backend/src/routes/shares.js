@@ -12,6 +12,8 @@ router.use(requireAuth, requireRole('patient'), requirePatient);
 
 router.post('/', validate(validateShare), shareController.create);
 router.get('/', shareController.list);
+router.get('/standing', shareController.standing);
+router.post('/standing/reset', shareController.resetStanding);
 router.delete('/:id', shareController.revoke);
 
 module.exports = router;

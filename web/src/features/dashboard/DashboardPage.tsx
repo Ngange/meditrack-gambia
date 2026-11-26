@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { ErrorCard } from '../../components/ui/ErrorCard';
 import { Loading } from '../../components/ui/Loading';
 import { useFetch } from '../../hooks/useFetch';
@@ -24,6 +25,11 @@ export function DashboardPage() {
   return (
     <div className="allergies-page">
       <div className="allergies-inner">
+        <div className="a-actions">
+          <Link className="a-btn" to="/print">
+            Print my record
+          </Link>
+        </div>
         <div className="dash-cards">
           <EmergencyCard profile={profile} activeAllergies={activeAllergies} />
           <SummaryCard

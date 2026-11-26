@@ -52,6 +52,9 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       again.current = true; // something was saved during this sync: go once more when it ends
       return;
     }
+    // With no connection at all, do not even try: a request would just hang until its timeout.
+    const net = await Network.getNetworkStateAsync().catch(() => null);
+    if (net && (!net.isConnected || net.isInternetReachable === false)) return;
     await session.sync();
     if (again.current) {
       again.current = false;

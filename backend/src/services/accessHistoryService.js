@@ -12,7 +12,7 @@ const doctorName = (r) => (r.first_name ? `Dr ${r.first_name} ${r.last_name}` : 
 // Doctors who can open the patient's record right now.
 async function listActive(patientId) {
   const { rows } = await pool.query(
-    `SELECT s.session_id, s.started_at, s.expires_at, pr.first_name, pr.last_name, pr.facility_name
+    `SELECT s.session_id, s.started_at, s.expires_at, s.opened_via, pr.first_name, pr.last_name, pr.facility_name
        FROM provider_sessions s LEFT JOIN provider_profile pr ON pr.provider_id = s.provider_id
       WHERE s.patient_id = $1 AND s.ended_at IS NULL AND s.expires_at > now()
       ORDER BY s.started_at DESC`,
@@ -22,6 +22,7 @@ async function listActive(patientId) {
     session_id: r.session_id,
     doctor: doctorName(r),
     facility: r.facility_name ?? null,
+    via: r.opened_via,
     started_at: r.started_at,
     expires_at: r.expires_at,
   }));
@@ -30,12 +31,16 @@ async function listActive(patientId) {
 // Past doctor sessions, with how each one ended and how many changes the doctor made during it.
 async function sessionEvents(patientId) {
   const { rows } = await pool.query(
-    `SELECT s.session_id, s.started_at, s.expires_at, s.ended_at, s.ended_by,
+    `SELECT s.session_id, s.started_at, s.expires_at, s.ended_at, s.ended_by, s.opened_via,
             pr.first_name, pr.last_name, pr.facility_name,
             (SELECT count(*)::int FROM audit_logs a
               WHERE a.patient_id = s.patient_id AND a.actor_type = 'provider' AND a.actor_id = pr.user_id
                 AND a.action IN ('create', 'update')
-                AND a.occurred_at >= s.started_at AND a.occurred_at <= COALESCE(s.ended_at, s.expires_at)) AS changes
+                AND a.occurred_at >= s.started_at AND a.occurred_at <= COALESCE(s.ended_at, s.expires_at)) AS changes,
+            (SELECT count(*)::int FROM audit_logs a
+              WHERE a.patient_id = s.patient_id AND a.actor_type = 'provider' AND a.actor_id = pr.user_id
+                AND a.action = 'print'
+                AND a.occurred_at >= s.started_at AND a.occurred_at <= COALESCE(s.ended_at, s.expires_at)) AS prints
        FROM provider_sessions s LEFT JOIN provider_profile pr ON pr.provider_id = s.provider_id
       WHERE s.patient_id = $1 AND NOT (s.ended_at IS NULL AND s.expires_at > now())
       ORDER BY s.started_at DESC LIMIT $2`,
@@ -45,7 +50,8 @@ async function sessionEvents(patientId) {
     const place = r.facility_name ? `${doctorName(r)}, ${r.facility_name}` : doctorName(r);
     const how = { patient: 'You ended the access.', provider: 'The doctor ended the access.', replaced: 'The doctor opened the record again.' }[r.ended_by] ?? 'The hour ran out.';
     const changes = r.changes ? ` ${r.changes === 1 ? 'They made 1 change.' : `They made ${r.changes} changes.`}` : '';
-    return { id: `s-${r.session_id}`, type: 'doctor_session', at: r.started_at, title: `${place} opened your record.`, detail: `${how}${changes}` };
+    const printed = r.prints ? ` They printed your record${r.prints > 1 ? ` ${r.prints} times` : ''}.` : '';
+    return { id: `s-${r.session_id}`, type: 'doctor_session', at: r.started_at, title: `${place} opened your record${r.opened_via === 'qr' ? ' by scanning your QR code' : ''}.`, detail: `${how}${changes}${printed}` };
   });
 }
 
@@ -77,12 +83,13 @@ async function pinStreakEvents(patientId) {
 
 async function shareEvents(patientId) {
   const { rows } = await pool.query(
-    `SELECT occurred_at FROM audit_logs
-      WHERE patient_id = $1 AND actor_type = 'share_token' AND record_type = 'share_page'
-      ORDER BY occurred_at DESC LIMIT $2`,
+    `SELECT a.occurred_at, COALESCE(s.standing, false) AS standing FROM audit_logs a
+       LEFT JOIN record_shares s ON s.share_id = a.share_id
+      WHERE a.patient_id = $1 AND a.actor_type = 'share_token' AND a.record_type = 'share_page'
+      ORDER BY a.occurred_at DESC LIMIT $2`,
     [patientId, HISTORY_LIMIT],
   );
-  return rows.map((r, i) => ({ id: `l-${i}-${new Date(r.occurred_at).getTime()}`, type: 'share_link', at: r.occurred_at, title: 'One of your share links was opened.', detail: null }));
+  return rows.map((r, i) => ({ id: `l-${i}-${new Date(r.occurred_at).getTime()}`, type: 'share_link', at: r.occurred_at, title: r.standing ? 'Your permanent QR code was scanned.' : 'One of your share links was opened.', detail: null }));
 }
 
 async function get(patientId) {

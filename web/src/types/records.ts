@@ -204,6 +204,9 @@ export type Share = {
 // The reply to making a link. The address (and its secret) is shown once and never stored.
 export type CreatedShare = { share: Share; token: string; url: string };
 
+// The permanent QR: a link to everything that never expires, until the patient resets it.
+export type StandingQr = { share_id: string; url: string; created_at: string; view_count: number; last_viewed_at: string | null };
+
 export type ShareInput = { recordTypes: ShareSection[]; duration: ShareDuration };
 
 // What the person holding a link sees.
@@ -215,7 +218,9 @@ export type SharedView = {
     emergency_contact_name?: string | null;
     emergency_contact_phone?: string | null;
   };
-  expires_at: string;
+  /** Null for the patient's permanent QR, which has no end date. */
+  expires_at: string | null;
+  standing?: boolean;
   record_types: ShareSection[];
   sections: {
     allergies?: Allergy[];
@@ -239,7 +244,7 @@ export type Access = {
 
 // ---- Who has seen the record -------------------------------------------------------------------
 
-export type ActiveAccess = { session_id: string; doctor: string; facility: string | null; started_at: string; expires_at: string };
+export type ActiveAccess = { session_id: string; doctor: string; facility: string | null; started_at: string; expires_at: string; via?: 'pin' | 'qr' };
 export type AccessEvent = {
   id: string;
   type: 'doctor_session' | 'wrong_pin' | 'share_link';
