@@ -26,3 +26,8 @@ export function register(email: string, password: string, firstName: string, las
     auth: false,
   });
 }
+
+/** Choose a new password. Returns a fresh login token. */
+export function changePassword(currentPassword: string, newPassword: string) {
+  return request<{ token: string }>('/auth/change-password', { method: 'POST', body: { currentPassword, newPassword } });
+}

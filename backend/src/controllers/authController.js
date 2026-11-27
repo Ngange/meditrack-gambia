@@ -16,11 +16,15 @@ const registerProvider = asyncHandler(
 );
 
 const login = asyncHandler('Login failed. Please try again.', async (req, res) => {
-  res.json(await authService.login(req.valid));
+  res.json(await authService.login(req.valid, { ip: req.ip, userAgent: req.get('user-agent') }));
 });
 
 const deviceRefresh = asyncHandler('Could not sync. Please try again.', async (req, res) => {
   res.json(await authService.refreshDevice(req.valid));
 });
 
-module.exports = { register, registerProvider, login, deviceRefresh };
+const changePassword = asyncHandler('Could not change the password.', async (req, res) => {
+  res.json(await authService.changePassword(req.user.userId, req.valid));
+});
+
+module.exports = { changePassword, register, registerProvider, login, deviceRefresh };

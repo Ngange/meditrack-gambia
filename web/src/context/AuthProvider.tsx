@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { login, register, registerProvider } from '../api/auth';
+import { changePassword, login, register, registerProvider } from '../api/auth';
 import { setUnauthorizedHandler } from '../api/client';
 import type { AuthUser, Role } from '../types/auth';
 import { clearToken, getToken, saveToken } from '../utils/token-storage';
@@ -12,12 +12,12 @@ function readUserFromToken(): AuthUser | null {
   const token = getToken();
   if (!token) return null;
   try {
-    const decoded = jwtDecode<{ userId: string; role: Role; exp: number }>(token);
+    const decoded = jwtDecode<{ userId: string; role: Role; exp: number; mcp?: boolean }>(token);
     if (decoded.exp * 1000 < Date.now()) {
       clearToken();
       return null;
     }
-    return { userId: decoded.userId, role: decoded.role, email: '' };
+    return { userId: decoded.userId, role: decoded.role, email: '', ...(decoded.mcp ? { mustChangePassword: true } : {}) };
   } catch {
     clearToken();
     return null;
@@ -46,6 +46,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const result = await login(email, password);
         saveToken(result.token);
         setUser(result.user);
+      },
+      async changePassword(currentPassword, newPassword) {
+        const result = await changePassword(currentPassword, newPassword);
+        saveToken(result.token);
+        setUser((u) => (u ? { ...u, mustChangePassword: false } : u));
       },
       async signUp(email, password, firstName, lastName) {
         const result = await register(email, password, firstName, lastName);

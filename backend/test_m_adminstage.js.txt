@@ -1,0 +1,101 @@
+const { makeApp, start } = require('./helpers');
+const pool = require('../src/config/db');
+const argon2 = require('argon2');
+const app = makeApp({ '/auth': '../src/routes/auth', '/patients': '../src/routes/patients', '/records': '../src/routes/records', '/provider': '../src/routes/provider', '/providers': '../src/routes/providers', '/admin': '../src/routes/admin' });
+start(app, async ({ call, t, register }) => {
+  const pat = await register('pat@x.com', 'Aisha', 'Ceesay');
+  const pat2 = await register('pat2@x.com', 'Bakary', 'Jallow');
+  const code = (await call('GET', '/patients/me/access', pat.token)).j.access.patient_code;
+  await call('PUT', '/patients/me/pin', pat.token, { pin: '482915', password: 'password123' });
+  await call('POST', '/records/allergies', pat.token, { allergen: 'SECRETPEANUT-XYZ', severity: 'mild', reaction: 'SECRETREACTION-XYZ' });
+  const d = (await call('POST', '/auth/register-provider', null, { email: 'doc@x.com', password: 'password123', firstName: 'Amadou', lastName: 'Sow', licenceNumber: 'LIC-9', facilityName: 'Clinic' })).j;
+  await pool.query("UPDATE provider_profile SET verification_status='verified' WHERE provider_id=$1", [d.provider_id]);
+  await pool.query("INSERT INTO users (email, password_hash, role) VALUES ('boss@x.com', $1, 'admin')", [await argon2.hash('adminpass1')]);
+  await pool.query("INSERT INTO users (email, password_hash, role) VALUES ('boss2@x.com', $1, 'admin')", [await argon2.hash('adminpass1')]);
+  const admin = (await call('POST', '/auth/login', null, { email: 'boss@x.com', password: 'adminpass1' })).j;
+  const admin2 = (await call('POST', '/auth/login', null, { email: 'boss2@x.com', password: 'adminpass1' })).j;
+
+  // every new route refuses non-admins
+  const routes = [['GET', '/admin/overview'], ['GET', '/admin/users'], ['GET', `/admin/users/${pat.userId}`], ['PATCH', `/admin/users/${pat.userId}/status`, { status: 'suspended', note: 'x' }], ['POST', `/admin/users/${pat.userId}/revoke-devices`, {}], ['GET', '/admin/activity'], ['GET', '/admin/security'], ['GET', '/admin/providers-activity']];
+  for (const [m, p, b] of routes) {
+    const a = await call(m, p, pat.token, b), c = await call(m, p, d.token, b), n = await call(m, p, null, b);
+    t(`${m} ${p.split('/').slice(0, 3).join('/')} refused to non-admins`, a.s === 403 && c.s === 403 && n.s === 401);
+  }
+
+  // login events
+  await call('POST', '/auth/login', null, { email: 'pat@x.com', password: 'wrongwrong' }, { 'user-agent': 'okhttp/4' });
+  await call('POST', '/auth/login', null, { email: 'nobody@x.com', password: 'wrongwrong' });
+  const ev = (await pool.query('SELECT email, success, reason, source FROM login_events ORDER BY event_id')).rows;
+  t('ok login recorded', ev.some((e) => e.email === 'boss@x.com' && e.success && e.reason === 'ok'));
+  t('bad password recorded as app', ev.some((e) => e.email === 'pat@x.com' && !e.success && e.reason === 'bad_password' && e.source === 'app'));
+  t('unknown email recorded', ev.some((e) => e.email === 'nobody@x.com' && e.reason === 'unknown_email'));
+
+  // doctor session by PIN + one record added
+  const sess = (await call('POST', '/provider/access', d.token, { code, pin: '482915' })).j.session;
+  const sid = sess.session_id;
+  t('doctor session opens', !!sid);
+  await call('POST', `/provider/sessions/${sid}/records/allergies`, d.token, { allergen: 'Dust', severity: 'mild' });
+  await call('POST', '/provider/access', d.token, { code, pin: '000000' });
+
+  // overview
+  const ov = (await call('GET', '/admin/overview', admin.token)).j;
+  t('overview counts', ov.users.patients === 2 && ov.users.doctors === 1 && ov.doctors.verified === 1 && ov.live.open_sessions === 1);
+  t('overview series is 30 days', ov.series.length === 30 && ov.series[29].sessions >= 1);
+
+  // users list/search
+  const all = (await call('GET', '/admin/users', admin.token)).j;
+  t('users list excludes admins', all.users.length === 3 && all.users.every((u) => u.role !== 'admin'));
+  t('search by name', (await call('GET', '/admin/users?q=ceesay', admin.token)).j.users.length === 1);
+  t('search by patient code', (await call('GET', `/admin/users?q=${code}`, admin.token)).j.users[0]?.email === 'pat@x.com');
+  t('search treats % literally', (await call('GET', '/admin/users?q=%25', admin.token)).j.users.length === 0);
+  t('role filter', (await call('GET', '/admin/users?role=provider', admin.token)).j.users.length === 1);
+  t('bad id is 404', (await call('GET', '/admin/users/not-a-uuid', admin.token)).s === 404);
+  const det = (await call('GET', `/admin/users/${d.user.userId}`, admin.token)).j;
+  t('doctor detail has activity counts', det.activity.sessions === 1 && det.activity.records_added === 1);
+
+  // activity feed
+  const act = (await call('GET', '/admin/activity', admin.token)).j.events;
+  t('feed has names and code', act.some((e) => e.category === 'session' && e.patient_name === 'Aisha Ceesay' && e.patient_code === code && e.actor_email === 'doc@x.com'));
+  t('feed has failed pin', act.some((e) => e.category === 'pin' && e.result === 'failed'));
+  t('feed has record add by type', act.some((e) => e.category === 'record' && e.action === 'Added' && e.record_type === 'allergy' || e.record_type === 'allergies'));
+  t('filter category', (await call('GET', '/admin/activity?category=login', admin.token)).j.events.every((e) => e.category === 'login'));
+  t('filter failed', (await call('GET', '/admin/activity?result=failed', admin.token)).j.events.every((e) => e.result === 'failed'));
+  t('filter by user', (await call('GET', `/admin/activity?user=${pat.userId}`, admin.token)).j.events.length > 0);
+  t('bad category 400', (await call('GET', '/admin/activity?category=zzz', admin.token)).s === 400);
+  t('bad date 400', (await call('GET', '/admin/activity?from=yesterday', admin.token)).s === 400);
+  t('limit is capped', (await call('GET', '/admin/activity?limit=99999', admin.token)).s === 200);
+
+  // privacy: no health content anywhere in admin responses
+  const bodies = JSON.stringify([ov, all, det, act, (await call('GET', '/admin/security', admin.token)).j, (await call('GET', `/admin/users/${pat.userId}`, admin.token)).j]);
+  t('no health content leaks', !/SECRETPEANUT|SECRETREACTION|Dust/.test(bodies));
+  t('no password hashes leak', !/argon2|password_hash/.test(bodies));
+
+  // suspend
+  t('suspend needs a reason', (await call('PATCH', `/admin/users/${d.user.userId}/status`, admin.token, { status: 'suspended' })).s === 400);
+  t('cannot suspend an admin', (await call('PATCH', `/admin/users/${admin2.user.userId}/status`, admin.token, { status: 'suspended', note: 'x' })).s === 403);
+  t('cannot suspend yourself', (await call('PATCH', `/admin/users/${admin.user.userId}/status`, admin.token, { status: 'suspended', note: 'x' })).s === 403);
+  const sus = await call('PATCH', `/admin/users/${d.user.userId}/status`, admin.token, { status: 'suspended', note: 'Licence under review' });
+  t('doctor suspended, sessions ended', sus.s === 200 && sus.j.sessions_ended === 1);
+  t('existing token refused at once', (await call('GET', '/provider/sessions', d.token)).s === 401);
+  const relog = await call('POST', '/auth/login', null, { email: 'doc@x.com', password: 'password123' });
+  t('suspended login refused', relog.s >= 400 && relog.s < 500);
+  const ended = (await pool.query("SELECT ended_by FROM provider_sessions WHERE session_id=$1", [sid])).rows[0];
+  t("session ended_by 'admin'", ended.ended_by === 'admin');
+  t('suspended login recorded', (await pool.query("SELECT 1 FROM login_events WHERE reason='suspended'")).rows.length === 1);
+  t('twice is 409', (await call('PATCH', `/admin/users/${d.user.userId}/status`, admin.token, { status: 'suspended', note: 'x' })).s === 409);
+  const sec = (await call('GET', '/admin/security', admin.token)).j;
+  t('security flags suspended attempt', sec.flags.some((f) => f.kind === 'suspended_login'));
+  t('security lists thresholds', sec.thresholds.failedLogins === 5);
+  const pend = (await call('GET', `/patients/me/access/history`, pat.token));
+  const rv = await call('POST', `/admin/users/${pat.userId}/revoke-devices`, admin.token, {});
+  t('revoke devices ok', rv.s === 200 && typeof rv.j.phones_signed_out === 'number');
+  const react = await call('PATCH', `/admin/users/${d.user.userId}/status`, admin.token, { status: 'active', note: 'Cleared' });
+  t('reactivate works', react.s === 200);
+  t('doctor can log in again', (await call('POST', '/auth/login', null, { email: 'doc@x.com', password: 'password123' })).s === 200);
+  const log = (await pool.query('SELECT action FROM admin_user_actions ORDER BY occurred_at')).rows.map((r) => r.action);
+  t('admin actions logged', log.join() === 'suspend,revoke_devices,reactivate');
+  t('admin actions show in feed', (await call('GET', '/admin/activity?category=admin', admin.token)).j.events.length >= 3);
+  // five failed logins flag
+  for (let i = 0; i < 5; i++) await call('POST', '/auth/login', null, { email: 'pat2@x.com', password: 'badbadbad' });
+  t('repeated failed logins flagged', (await call('GET', '/admin/security', admin.token)).j.flags.some((f) => f.kind === 'failed_logins' && f.subject === 'pat2@x.com'));
+});

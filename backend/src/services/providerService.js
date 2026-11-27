@@ -24,29 +24,53 @@ async function getMe(userId) {
   return { ...dto(rows[0]), email: rows[0].email };
 }
 
-// For the admin: doctors waiting for a decision (or any status).
+// For the admin: doctors waiting for a decision (or any status), with who decided and when.
 async function listForAdmin(status) {
   const { rows } = await pool.query(
-    `SELECT p.*, u.email FROM provider_profile p JOIN users u ON u.user_id = p.user_id
+    `SELECT p.*, u.email, v.email AS decided_by
+       FROM provider_profile p
+       JOIN users u ON u.user_id = p.user_id
+       LEFT JOIN users v ON v.user_id = p.verified_by
       WHERE ($1::text IS NULL OR p.verification_status = $1) ORDER BY p.created_at`,
     [status],
   );
-  return rows.map((r) => ({ ...dto(r), email: r.email }));
+  return rows.map((r) => ({ ...dto(r), email: r.email, decided_by: r.decided_by }));
 }
 
 // An admin verifies or rejects a doctor. The decision can be changed later (for example if a
-// licence is withdrawn), and who decided and when is kept.
+// licence is withdrawn). Who decided and when is kept on the doctor, and every decision is also
+// written to admin_audit in the same statement, so a change can never happen without a record.
 async function review(adminUserId, providerId, { decision, note }) {
   // An id that is not even shaped like one cannot match a doctor.
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(providerId)) throw new AppError(404, 'Doctor not found.');
   const { rows } = await pool.query(
-    `UPDATE provider_profile
-        SET verification_status = $2, verification_note = $3, verified_by = $4, verified_at = now()
-      WHERE provider_id = $1 RETURNING *`,
+    `WITH prev AS (SELECT verification_status FROM provider_profile WHERE provider_id = $1),
+          upd AS (
+            UPDATE provider_profile
+               SET verification_status = $2, verification_note = $3, verified_by = $4, verified_at = now()
+             WHERE provider_id = $1 RETURNING *),
+          ins AS (
+            INSERT INTO admin_audit (admin_user_id, provider_id, previous_status, decision, note)
+            SELECT $4, upd.provider_id, prev.verification_status, $2, $3 FROM upd, prev)
+     SELECT * FROM upd`,
     [providerId, decision, note, adminUserId],
   );
   if (!rows[0]) throw new AppError(404, 'Doctor not found.');
   return dto(rows[0]);
 }
 
-module.exports = { getMe, listForAdmin, review };
+// The admin's decision history, newest first.
+async function decisions(limit = 100) {
+  const { rows } = await pool.query(
+    `SELECT a.audit_id, a.previous_status, a.decision, a.note, a.decided_at, a.provider_id,
+            p.first_name, p.last_name, p.licence_number, u.email AS admin_email
+       FROM admin_audit a
+       JOIN provider_profile p ON p.provider_id = a.provider_id
+       LEFT JOIN users u ON u.user_id = a.admin_user_id
+      ORDER BY a.decided_at DESC LIMIT $1`,
+    [limit],
+  );
+  return rows;
+}
+
+module.exports = { getMe, listForAdmin, review, decisions };

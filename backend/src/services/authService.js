@@ -4,9 +4,10 @@ const pool = require('../config/db');
 const env = require('../config/env');
 const AppError = require('../utils/AppError');
 const deviceService = require('./deviceService');
+const { cleanIp } = require('./auditService');
 
 function signToken(user) {
-  return jwt.sign({ userId: user.user_id, role: user.role }, env.jwtSecret, {
+  return jwt.sign({ userId: user.user_id, role: user.role, ...(user.must_change_password ? { mcp: true } : {}) }, env.jwtSecret, {
     expiresIn: '7d',
   });
 }
@@ -91,19 +92,43 @@ async function registerProvider({ email, password, firstName, lastName, licenceN
   }
 }
 
-async function login({ email, password, device }) {
+// One line per login attempt, for the administrator's activity and security screens. It never breaks a login.
+// meta = { ip, userAgent }. The phone app is told apart from a browser by its device details or its user agent.
+async function recordLogin({ userId = null, email, success, reason }, meta = {}, device = null) {
+  try {
+    const source = device || /okhttp|expo|cfnetwork|react-native/i.test(meta.userAgent || '') ? 'app' : 'web';
+    await pool.query(
+      'INSERT INTO login_events (user_id, email, success, reason, source, ip_address) VALUES ($1, $2, $3, $4, $5, $6)',
+      [userId, String(email).toLowerCase().slice(0, 255), success, reason, source, cleanIp(meta.ip)],
+    );
+  } catch (err) {
+    console.error('Could not record login:', err.message);
+  }
+}
+
+async function login({ email, password, device }, meta = {}) {
   const result = await pool.query(
-    'SELECT user_id, email, password_hash, role, status FROM users WHERE email = $1',
+    'SELECT user_id, email, password_hash, role, status, must_change_password FROM users WHERE email = $1',
     [email],
   );
   const invalid = new AppError(401, 'Invalid email or password.');
 
-  if (result.rows.length === 0) throw invalid;
+  if (result.rows.length === 0) {
+    await recordLogin({ email, success: false, reason: 'unknown_email' }, meta, device);
+    throw invalid;
+  }
   const user = result.rows[0];
 
-  if (!(await argon2.verify(user.password_hash, password))) throw invalid;
+  if (!(await argon2.verify(user.password_hash, password))) {
+    await recordLogin({ userId: user.user_id, email, success: false, reason: 'bad_password' }, meta, device);
+    throw invalid;
+  }
   // Checked after the password, so only the account's owner learns it is suspended.
-  if (user.status !== 'active') throw new AppError(403, 'This account has been suspended. Contact support.');
+  if (user.status !== 'active') {
+    await recordLogin({ userId: user.user_id, email, success: false, reason: 'suspended' }, meta, device);
+    throw new AppError(403, 'This account has been suspended. Contact support.');
+  }
+  await recordLogin({ userId: user.user_id, email, success: true, reason: 'ok' }, meta, device);
 
   // A phone that signed in with its details gets a device key for offline sync (patients only).
   let issued = null;
@@ -113,9 +138,20 @@ async function login({ email, password, device }) {
   }
   return {
     token: signToken(user),
-    user: { userId: user.user_id, email: user.email, role: user.role },
+    user: { userId: user.user_id, email: user.email, role: user.role, ...(user.must_change_password ? { mustChangePassword: true } : {}) },
     ...(issued ? { device: issued } : {}),
   };
+}
+
+// The signed-in person chooses a new password. Their phones are signed out (they sign in again with the new one).
+async function changePassword(userId, { currentPassword, newPassword }) {
+  const { rows } = await pool.query('SELECT user_id, role, password_hash FROM users WHERE user_id = $1', [userId]);
+  const user = rows[0];
+  if (!user || !(await argon2.verify(user.password_hash, currentPassword))) throw new AppError(400, 'Your current password is not right.');
+  if (currentPassword === newPassword) throw new AppError(400, 'Choose a password different from the current one.');
+  await pool.query('UPDATE users SET password_hash = $2, must_change_password = false WHERE user_id = $1', [userId, await argon2.hash(newPassword)]);
+  await deviceService.revokeAllForUser(userId);
+  return { token: signToken({ user_id: user.user_id, role: user.role }) };
 }
 
 // The phone trades its device key for a fresh login token without asking for the password.
@@ -128,4 +164,5 @@ async function refreshDevice({ deviceKey }) {
   };
 }
 
-module.exports = { registerPatient, registerProvider, login, refreshDevice };
+module.exports = {
+  changePassword, registerPatient, registerProvider, login, refreshDevice };

@@ -26,7 +26,43 @@ function validateReview(body) {
   if (decision !== 'verified' && decision !== 'rejected') return { error: 'Decision must be "verified" or "rejected".' };
   const note = clean(body.note);
   if (note.length > 500) return { error: 'The note is too long (500 characters at most).' };
+  if (decision === 'rejected' && !note) return { error: 'Give a reason when rejecting a doctor, so they know what to fix.' };
   return { value: { decision, note: note || null } };
 }
 
-module.exports = { validateRegisterProvider, validateReview };
+function validateUserStatus(body) {
+  const status = body.status;
+  if (status !== 'active' && status !== 'suspended') return { error: 'Status must be "active" or "suspended".' };
+  const note = clean(body.note);
+  if (note.length > 500) return { error: 'The note is too long (500 characters at most).' };
+  if (status === 'suspended' && !note) return { error: 'Give a reason when suspending an account.' };
+  return { value: { status, note: note || null } };
+}
+
+function validateNote(body) {
+  const note = clean(body.note);
+  if (note.length > 500) return { error: 'The note is too long (500 characters at most).' };
+  return { value: { note: note || null } };
+}
+
+function validateNewAdmin(body) {
+  const email = clean(body.email);
+  const password = typeof body.password === 'string' ? body.password : '';
+  const adminPassword = typeof body.adminPassword === 'string' ? body.adminPassword : '';
+  if (!/^\S+@\S+\.\S+$/.test(email) || email.length > 255) return { error: 'Enter a valid email address.' };
+  if (password.length < 8) return { error: 'The temporary password must be at least 8 characters.' };
+  if (password.length > 200) return { error: 'The temporary password is too long.' };
+  if (!adminPassword) return { error: 'Enter your own password to confirm.' };
+  return { value: { email, password, adminPassword } };
+}
+
+function validateDeleteUser(body) {
+  const email = clean(body.email);
+  const note = clean(body.note);
+  if (!email) return { error: 'Type the account email to confirm.' };
+  if (!note) return { error: 'Give a reason. It is kept in the log.' };
+  if (note.length > 500) return { error: 'The reason is too long (500 characters at most).' };
+  return { value: { email, note } };
+}
+
+module.exports = { validateRegisterProvider, validateReview, validateUserStatus, validateNote, validateNewAdmin, validateDeleteUser };

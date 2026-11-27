@@ -48,7 +48,7 @@ async function sessionEvents(patientId) {
   );
   return rows.map((r) => {
     const place = r.facility_name ? `${doctorName(r)}, ${r.facility_name}` : doctorName(r);
-    const how = { patient: 'You ended the access.', provider: 'The doctor ended the access.', replaced: 'The doctor opened the record again.' }[r.ended_by] ?? 'The hour ran out.';
+    const how = { patient: 'You ended the access.', provider: 'The doctor ended the access.', replaced: 'The doctor opened the record again.', admin: 'An administrator ended the access.' }[r.ended_by] ?? 'The hour ran out.';
     const changes = r.changes ? ` ${r.changes === 1 ? 'They made 1 change.' : `They made ${r.changes} changes.`}` : '';
     const printed = r.prints ? ` They printed your record${r.prints > 1 ? ` ${r.prints} times` : ''}.` : '';
     return { id: `s-${r.session_id}`, type: 'doctor_session', at: r.started_at, title: `${place} opened your record${r.opened_via === 'qr' ? ' by scanning your QR code' : ''}.`, detail: `${how}${changes}${printed}` };

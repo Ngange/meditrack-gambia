@@ -1,7 +1,14 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from '../components/layout/AppShell';
 import { AllergiesPage } from '../features/allergies/AllergiesPage';
-import { AdminNoticePage } from '../features/auth/AdminNoticePage';
+import { AccountPage, ForcedChangePasswordPage } from '../features/admin/ChangePasswordPage';
+import { AdminsPage } from '../features/admin/AdminsPage';
+import { ActivityPage } from '../features/admin/ActivityPage';
+import { AdminShell } from '../features/admin/AdminShell';
+import { DoctorsPage } from '../features/admin/DoctorsPage';
+import { OverviewPage } from '../features/admin/OverviewPage';
+import { SecurityPage } from '../features/admin/SecurityPage';
+import { UsersPage } from '../features/admin/UsersPage';
 import { RegisterProviderPage } from '../features/auth/RegisterProviderPage';
 import { DoctorHomePage } from '../features/provider/DoctorHomePage';
 import { DoctorPatientPage } from '../features/provider/DoctorPatientPage';
@@ -41,7 +48,18 @@ export function AppRoutes() {
           <Route path="/patient/:sessionId/print" element={<DoctorPrintPage />} />
         </Route>
       )}
-      {user?.role === 'admin' && <Route path="/" element={<AdminNoticePage />} />}
+      {user?.role === 'admin' && user.mustChangePassword && <Route path="*" element={<ForcedChangePasswordPage />} />}
+      {user?.role === 'admin' && !user.mustChangePassword && (
+        <Route element={<AdminShell />}>
+          <Route path="/admins" element={<AdminsPage />} />
+          <Route path="/account" element={<AccountPage />} />
+          <Route path="/" element={<OverviewPage />} />
+          <Route path="/doctors" element={<DoctorsPage />} />
+          <Route path="/users" element={<UsersPage />} />
+          <Route path="/activity" element={<ActivityPage />} />
+          <Route path="/security" element={<SecurityPage />} />
+        </Route>
+      )}
       {user?.role === 'patient' && <Route path="/print" element={<PatientPrintPage />} />}
       {user?.role === 'patient' && (
         <Route element={<AppShell />}>

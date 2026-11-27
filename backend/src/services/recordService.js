@@ -24,10 +24,10 @@ function createRecordService(model) {
     const labels = new Map();
     if (ids.length) {
       const found = await db.query(
-        'SELECT provider_id, first_name, last_name, facility_name FROM provider_profile WHERE provider_id = ANY($1::uuid[])',
+        'SELECT provider_id, user_id, first_name, last_name, facility_name FROM provider_profile WHERE provider_id = ANY($1::uuid[])',
         [ids],
       );
-      for (const p of found.rows) labels.set(p.provider_id, { provider_id: p.provider_id, name: `Dr ${p.first_name} ${p.last_name}`, facility: p.facility_name });
+      for (const p of found.rows) labels.set(p.provider_id, { provider_id: p.provider_id, name: p.user_id ? `Dr ${p.first_name} ${p.last_name}` : 'a removed doctor', facility: p.user_id ? p.facility_name : null });
     }
     return dtos.map((dto, i) => {
       const id = rows[i].entered_by_provider;

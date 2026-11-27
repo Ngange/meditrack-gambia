@@ -39,7 +39,7 @@ export function notifyUnauthorized() {
 }
 
 type RequestOptions = {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   /** A plain object is sent as JSON; FormData (file uploads) is sent as-is. */
   body?: unknown;
   /** Send the saved token. Turn off for login and register. */
